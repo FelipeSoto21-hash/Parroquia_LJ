@@ -39,7 +39,7 @@ body {
    NAVEGACIÓN
 ════════════════════════════════════════════════════════ */
 nav {
-  position: fixed;
+  position: sticky;
   top: 0;
   width: 100%;
   z-index: 100;
@@ -49,7 +49,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 10px 20px;
   height: 64px;
 }
 
@@ -249,7 +249,7 @@ nav {
 .parish-card.lj .card-cta:hover { background: var(--lj-burgundy-light); }
 
 /* ════════════════════════════════════════════════════════
-   CABECERA DE CADA PARROQUIA
+   CABECERA DE CADA PARROQUIA SC
 ════════════════════════════════════════════════════════ */
 .parish-header {
   padding: 4rem 2rem 3rem;
@@ -261,7 +261,7 @@ nav {
 .parish-header.sc {
   background-image: url('foto1.jpg');
   background-size: cover;
-  background-position: center 73%;
+  background-position: center 56%;
   background-repeat: no-repeat;
   min-height: 380px;
   display: flex;
@@ -269,40 +269,11 @@ nav {
   justify-content: center;
 }
 
-.parish-header.lj {
-  background-image: url('foto2.jpg');
-  background-size: cover;
-  background-position: center 48%;
-  background-repeat: no-repeat;
-  min-height: 380px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 /* Capa oscura semitransparente sobre la foto */
 .parish-header.sc .parish-header-overlay {
   position: absolute;
   inset: 0;
   background: rgba(10, 22, 40, 0.45);
-}
-
-.parish-header.lj .parish-header-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(10, 22, 40, 0.45);
-}
-
-.parish-header.lj .parish-header-text-box {  
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 2rem 3rem;
-  background: rgba(10, 22, 40, 0.52);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(201, 168, 76, 0.3);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 /* Caja de texto con efecto vidrio esmerilado (blur) */
@@ -319,7 +290,25 @@ nav {
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
+/* ════════════════════════════════════════════════════════
+   CABECERA DE CADA PARROQUIA lj
+════════════════════════════════════════════════════════ */
+.parish-header.lj {
+  background-image: url('foto2.jpg');
+  background-size: cover;
+  background-position: center 37%;
+  background-repeat: no-repeat;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.parish-header.lj .parish-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 22, 40, 0.45);
+}
 .parish-header-ornament {
   position: absolute;
   inset: 0;
@@ -965,6 +954,153 @@ nav {
 /* ════════════════════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════
+   QUIÉNES SOMOS — EQUIPO
+════════════════════════════════════════════════════════ */
+
+.team-description-text {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-mid);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #ede8dc;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+/* Tarjeta de persona */
+.team-card {
+  background: var(--cream);
+  border: 1px solid #e8dfc8;
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: center;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Foto circular */
+.team-photo-wrap {
+  padding: 1.5rem 1.5rem 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.team-photo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.team-photo-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #ddd6c8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  border: 3px solid #c8bfa8;
+}
+
+/* Info de la persona */
+.team-info {
+  padding: 0 1.25rem 1.5rem;
+}
+
+.team-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.team-role {
+  display: inline-block;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: white;
+  background: var(--sc-blue);
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+/* Contactos */
+.team-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.team-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.78rem;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  width: 100%;
+  transition: background 0.2s, color 0.2s;
+  word-break: break-all;
+}
+
+.team-contact-link.phone {
+  color: #1a7a3a;
+  background: #f0faf4;
+}
+.team-contact-link.phone:hover { background: #d1f5e0; }
+
+.team-contact-link.email {
+  color: #1a4a7a;
+  background: #f0f5ff;
+}
+.team-contact-link.email:hover { background: #d1e3ff; }
+
+.team-contact-link.instagram {
+  color: #c13584;
+  background: #fff0f8;
+}
+.team-contact-link.instagram:hover { background: #ffd6ef; }
+
+.team-contact-link.facebook {
+  color: #1877f2;
+  background: #f0f5ff;
+}
+.team-contact-link.facebook:hover { background: #d1e3ff; }
+
+/* Badge de rol para Luján (cuando se extienda) */
+.lj .team-role { background: var(--lj-burgundy); }
+
+@media (max-width: 600px) {
+  .team-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .team-photo, .team-photo-placeholder { width: 80px; height: 80px; }
+}
+
 @media (max-width: 600px) {
   .form-row           { grid-template-columns: 1fr; }
   .parish-cards       { flex-direction: column; align-items: center; }
@@ -972,4 +1108,226 @@ nav {
   .admin-tab          { font-size: 0.65rem; padding: 6px 10px; }
   nav                 { padding: 0 1rem; }
   .nav-brand          { font-size: 0.8rem; }
+}
+
+/* ════════════════════════════════════════════════════════
+   TARJETA "QUIÉNES SOMOS" EN EL INICIO
+════════════════════════════════════════════════════════ */
+.parish-card.quienes::before {
+  background: linear-gradient(90deg, #6b4c1a, #c9a84c);
+}
+.parish-card.quienes .card-cta {
+  background: #6b4c1a;
+  color: white;
+}
+.parish-card.quienes .card-cta:hover {
+  background: var(--gold);
+  color: var(--dark);
+}
+
+/* ════════════════════════════════════════════════════════
+   PÁGINA QUIÉNES SOMOS — HERO
+════════════════════════════════════════════════════════ */
+.quienes-hero {
+  background: linear-gradient(150deg, #1a1208 0%, #3a2808 50%, #1a1208 100%);
+  padding: 4rem 2rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.quienes-ornament {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 30%, rgba(201,168,76,0.07) 0%, transparent 50%);
+}
+
+/* Tabs para seleccionar parroquia */
+.quienes-tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.quienes-tab {
+  padding: 10px 24px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(201,168,76,0.35);
+  background: transparent;
+  color: #c4b08a;
+  font-family: 'Cinzel', serif;
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.quienes-tab:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.quienes-tab.active {
+  background: var(--gold);
+  color: var(--dark);
+  border-color: var(--gold);
+}
+
+/* Paneles de contenido */
+.quienes-panel {
+  display: none;
+}
+.quienes-panel.active {
+  display: block;
+}
+
+.quienes-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+/* Descripción */
+.quienes-desc-wrap {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #ede8dc;
+}
+
+.quienes-desc-text {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-mid);
+  font-size: 1rem;
+  line-height: 1.85;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ════════════════════════════════════════════════════════
+   TARJETAS DE PERSONAS DEL EQUIPO
+════════════════════════════════════════════════════════ */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1.75rem;
+}
+
+.team-card {
+  background: white;
+  border: 1px solid #e8dfc8;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.team-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.team-photo-wrap {
+  padding: 1.75rem 1.5rem 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.team-photo {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.13);
+}
+
+.team-photo-placeholder {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #ddd6c8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.8rem;
+  border: 3px solid #c8bfa8;
+}
+
+.team-info {
+  padding: 0 1.25rem 1.5rem;
+}
+
+.team-name {
+  font-family: 'Cinzel', serif;
+  font-size: 0.93rem;
+  color: var(--text-dark);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+  line-height: 1.35;
+}
+
+.team-role {
+  display: inline-block;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  color: white;
+  padding: 3px 12px;
+  border-radius: 12px;
+  margin-bottom: 1.1rem;
+}
+
+.team-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+  text-align: left;
+}
+
+.team-contact-link {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.78rem;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 7px;
+  width: 100%;
+  transition: background 0.18s;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.team-contact-link.phone     { color: #1a7a3a; background: #f0faf4; }
+.team-contact-link.phone:hover { background: #d1f5e0; }
+
+.team-contact-link.email     { color: #1a4a7a; background: #f0f5ff; }
+.team-contact-link.email:hover { background: #d1e3ff; }
+
+.team-contact-link.instagram { color: #c13584; background: #fff0f8; }
+.team-contact-link.instagram:hover { background: #ffd6ef; }
+
+.team-contact-link.facebook  { color: #1877f2; background: #f0f5ff; }
+.team-contact-link.facebook:hover { background: #d1e3ff; }
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .form-row           { grid-template-columns: 1fr; }
+  .parish-cards       { flex-direction: column; align-items: center; }
+  .admin-tabs         { gap: 4px; }
+  .admin-tab          { font-size: 0.65rem; padding: 6px 10px; }
+  nav                 { padding: 0 1rem; }
+  .nav-brand          { font-size: 0.8rem; }
+  .team-grid          { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+  .team-photo,
+  .team-photo-placeholder { width: 85px; height: 85px; }
+  .quienes-tab        { font-size: 0.7rem; padding: 8px 16px; }
 }
