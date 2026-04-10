@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parroquias San Crescente & Nuestra Señora de Luján</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,500;1,400&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     NAVEGACIÓN
+════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand"><span>✝</span> Parroquias Unidas</div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showPage('home')">Inicio</button>
+    <button class="nav-btn" onclick="showPage('sc')">San Crescente</button>
+    <button class="nav-btn" onclick="showPage('lj')">Ntra. Sra. de Luján</button>
+    <button class="nav-btn admin-btn" onclick="showPage('admin')">⚙ Admin</button>
+  </div>
+</nav>
+
+<!-- Toast de notificaciones -->
+<div class="toast" id="toast"></div>
+
+<!-- Lightbox de fotos -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÁGINA: INICIO
+════════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="hero-ornament"></div>
+    <div class="hero-cross">✝</div>
+    <h1 class="hero-title">Parroquias Unidas<br>de Las Condes</h1>
+    <p class="hero-subtitle">Comunidad de fe, esperanza y amor</p>
+    <div class="hero-divider"></div>
+    <div class="parish-cards">
+
+      <div class="parish-card sc" onclick="showPage('sc')">
+        <div class="card-icon">⛪</div>
+        <div class="card-name">Parroquia<br>San Crescente</div>
+        <div class="card-desc">Una comunidad viva llamada a evangelizar y servir</div>
+        <button class="card-cta">Ver Parroquia</button>
+      </div>
+
+      <div class="parish-card lj" onclick="showPage('lj')">
+        <div class="card-icon">⛪</div>
+        <div class="card-name">Parroquia Nuestra Señora<br>de Luján</div>
+        <div class="card-desc">Bajo el amparo de la Virgen de Luján, caminamos juntos</div>
+        <button class="card-cta">Ver Parroquia</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÁGINA: SAN CRESCENTE
+════════════════════════════════════ -->
+<div class="page" id="page-sc">
+
+  <div class="parish-header sc">
+    <div class="parish-header-overlay"></div>
+    <div class="parish-header-text-box">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;">⛪</div>
+      <h1 class="parish-title">Parroquia San Crescente</h1>
+      <p class="parish-subtitle">Comunidad viva, evangelizando con alegría</p>
+    </div>
+  </div>
+
+  <div class="parish-content sc">
+    <div class="section-grid">
+
+      <!-- Avisos -->
+      <div class="section-card">
+        <div class="section-card-header sc">
+          <span class="icon">📢</span>
+          <h3>Avisos y Noticias</h3>
+        </div>
+        <div class="section-card-body" id="sc-notices-display">
+          <div class="empty-state">No hay avisos por el momento.</div>
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <div class="section-card">
+        <div class="section-card-header sc">
+          <span class="icon">📅</span>
+          <h3>Próximas Fechas</h3>
+        </div>
+        <div class="section-card-body sc" id="sc-events-display">
+          <div class="empty-state">No hay eventos próximos.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Horario de misas -->
+    <div class="full-section-card">
+      <div class="full-section-header sc">
+        <span style="font-size:1.2rem;">🕊</span>
+        <h3>Horario de Misas</h3>
+      </div>
+      <div class="full-section-body" id="sc-schedule-display">
+        <div class="empty-state">Horario no disponible aún.</div>
+      </div>
+    </div>
+
+    <!-- Galería -->
+    <div class="full-section-card">
+      <div class="full-section-header sc">
+        <span style="font-size:1.2rem;">📷</span>
+        <h3>Galería de Fotos</h3>
+      </div>
+      <div class="photos-grid" id="sc-photos-display">
+        <div class="empty-state" style="grid-column:1/-1;">No hay fotos aún.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÁGINA: NUESTRA SEÑORA DE LUJÁN
+════════════════════════════════════ -->
+<div class="page" id="page-lj">
+
+  <div class="parish-header lj">
+    <div class="parish-header-overlay"></div>
+    <div class="parish-header-text-box">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;">⛪</div>
+      <h1 class="parish-title">Parroquia Nuestra Señora de Luján</h1>
+      <p class="parish-subtitle">Bajo el manto de María, caminamos en comunidad</p>
+    </div>
+  </div>
+
+  <div class="parish-content lj">
+    <div class="section-grid">
+
+      <!-- Avisos -->
+      <div class="section-card">
+        <div class="section-card-header lj">
+          <span class="icon">📢</span>
+          <h3>Avisos y Noticias</h3>
+        </div>
+        <div class="section-card-body" id="lj-notices-display">
+          <div class="empty-state">No hay avisos por el momento.</div>
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <div class="section-card">
+        <div class="section-card-header lj">
+          <span class="icon">📅</span>
+          <h3>Próximas Fechas</h3>
+        </div>
+        <div class="section-card-body lj" id="lj-events-display">
+          <div class="empty-state">No hay eventos próximos.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Horario de misas -->
+    <div class="full-section-card">
+      <div class="full-section-header lj">
+        <span style="font-size:1.2rem;">🕊</span>
+        <h3>Horario de Misas</h3>
+      </div>
+      <div class="full-section-body" id="lj-schedule-display">
+        <div class="empty-state">Horario no disponible aún.</div>
+      </div>
+    </div>
+
+    <!-- Galería -->
+    <div class="full-section-card">
+      <div class="full-section-header lj">
+        <span style="font-size:1.2rem;">📷</span>
+        <h3>Galería de Fotos</h3>
+      </div>
+      <div class="photos-grid" id="lj-photos-display">
+        <div class="empty-state" style="grid-column:1/-1;">No hay fotos aún.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÁGINA: ADMINISTRADOR
+════════════════════════════════════ -->
+<div class="page admin-page" id="page-admin">
+
+  <!-- LOGIN -->
+  <div id="admin-login-view" class="admin-login">
+    <div class="login-box">
+      <div style="font-size:2rem;margin-bottom:1rem;">✝</div>
+      <h2>Acceso Administrador</h2>
+      <p>Panel de gestión de las parroquias</p>
+
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="login-user" placeholder="Ingrese su usuario">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="Ingrese su contraseña"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <p class="error-msg" id="login-error" style="display:none;margin-bottom:1rem;"></p>
+      <button class="btn-primary" onclick="doLogin()">Ingresar</button>
+      <p style="margin-top:1rem;font-size:0.78rem;color:#999;font-family:'Lora',serif;font-style:italic;">
+        Usuario: admin · Contraseña: parroquia2024
+      </p>
+    </div>
+  </div>
+
+  <!-- PANEL PRINCIPAL -->
+  <div id="admin-panel-view" style="display:none;">
+    <div class="admin-panel">
+
+      <div class="admin-header-bar">
+        <div>
+          <h2>Panel de Administración</h2>
+          <p>Gestiona las dos parroquias desde aquí.</p>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+      </div>
+
+      <!-- Pestañas -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab('notices')">📢 Avisos</button>
+        <button class="admin-tab" onclick="switchAdminTab('events')">📅 Fechas</button>
+        <button class="admin-tab" onclick="switchAdminTab('schedule')">🕊 Horarios</button>
+        <button class="admin-tab" onclick="switchAdminTab('photos')">📷 Fotos</button>
+      </div>
+
+      <!-- ── AVISOS ── -->
+      <div class="admin-section active" id="tab-notices">
+        <div class="admin-card">
+          <h3>Agregar Aviso</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parroquia</label>
+              <select id="n-parish">
+                <option value="sc">San Crescente</option>
+                <option value="lj">Nuestra Señora de Luján</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Título del aviso</label>
+              <input type="text" id="n-title" placeholder="Ej: Retiro de Adviento">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="n-body" placeholder="Texto del aviso..."></textarea>
+          </div>
+          <button class="btn-add" onclick="addNotice()">+ Agregar Aviso</button>
+        </div>
+        <div class="admin-card">
+          <h3>Avisos Actuales</h3>
+          <div id="admin-notices-list"><div class="empty-state">No hay avisos.</div></div>
+        </div>
+      </div>
+
+      <!-- ── FECHAS / EVENTOS ── -->
+      <div class="admin-section" id="tab-events">
+        <div class="admin-card">
+          <h3>Agregar Fecha / Evento</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parroquia</label>
+              <select id="e-parish">
+                <option value="sc">San Crescente</option>
+                <option value="lj">Nuestra Señora de Luján</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Nombre del evento</label>
+              <input type="text" id="e-title" placeholder="Ej: Primera Comunión">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" id="e-date">
+            </div>
+            <div class="form-group">
+              <label>Descripción (opcional)</label>
+              <input type="text" id="e-desc" placeholder="Ej: Misa a las 11:00 hrs">
+            </div>
+          </div>
+          <button class="btn-add" onclick="addEvent()">+ Agregar Evento</button>
+        </div>
+        <div class="admin-card">
+          <h3>Eventos Registrados</h3>
+          <div id="admin-events-list"><div class="empty-state">No hay eventos.</div></div>
+        </div>
+      </div>
+
+      <!-- ── HORARIOS ── -->
+      <div class="admin-section" id="tab-schedule">
+        <div class="admin-card">
+          <h3>Agregar Horario de Misa</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parroquia</label>
+              <select id="s-parish">
+                <option value="sc">San Crescente</option>
+                <option value="lj">Nuestra Señora de Luján</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Día(s)</label>
+              <input type="text" id="s-day" placeholder="Ej: Lunes a Viernes">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Hora</label>
+              <input type="text" id="s-time" placeholder="Ej: 08:00 · 11:00 · 19:30 hrs">
+            </div>
+          </div>
+          <button class="btn-add" onclick="addSchedule()">+ Agregar Horario</button>
+        </div>
+        <div class="admin-card">
+          <h3>Horarios Actuales</h3>
+          <div id="admin-schedule-list"><div class="empty-state">No hay horarios.</div></div>
+        </div>
+      </div>
+
+      <!-- ── FOTOS ── -->
+      <div class="admin-section" id="tab-photos">
+        <div class="admin-card">
+          <h3>Subir Fotos</h3>
+          <div class="form-group">
+            <label>Parroquia</label>
+            <select id="p-parish">
+              <option value="sc">San Crescente</option>
+              <option value="lj">Nuestra Señora de Luján</option>
+            </select>
+          </div>
+          <div class="upload-zone" onclick="document.getElementById('photo-upload-input').click()">
+            <p>📸 Haz clic para seleccionar fotos</p>
+            <p style="font-size:0.78rem;margin-top:4px;">JPG, PNG o WEBP</p>
+          </div>
+          <input type="file" id="photo-upload-input" accept="image/*" multiple
+                 onchange="handlePhotos(event)" style="display:none;">
+        </div>
+
+        <div class="admin-card">
+          <h3>Fotos — San Crescente</h3>
+          <div class="photo-admin-grid" id="admin-sc-photos">
+            <div class="empty-state">Sin fotos.</div>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <h3>Fotos — Nuestra Señora de Luján</h3>
+          <div class="photo-admin-grid" id="admin-lj-photos">
+            <div class="empty-state">Sin fotos.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,975 @@
+/* ════════════════════════════════════════════════════════
+   VARIABLES GLOBALES
+════════════════════════════════════════════════════════ */
+:root {
+  --gold:               #c9a84c;
+  --gold-light:         #e8c97a;
+  --gold-dark:          #8b6914;
+  --cream:              #faf6ef;
+  --dark:               #1a1208;
+  --sc-blue:            #1a3a6b;
+  --sc-blue-light:      #2a5298;
+  --sc-accent:          #3b82c4;
+  --lj-burgundy:        #6b1a1a;
+  --lj-burgundy-light:  #922929;
+  --lj-accent:          #c44b3b;
+  --text-dark:          #2d2010;
+  --text-mid:           #5a4a2a;
+  --shadow:             0 4px 24px rgba(0,0,0,0.13);
+  --shadow-lg:          0 8px 48px rgba(0,0,0,0.18);
+}
+
+/* ════════════════════════════════════════════════════════
+   RESET Y BASE
+════════════════════════════════════════════════════════ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Nunito Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════════════════════
+   NAVEGACIÓN
+════════════════════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(26, 18, 8, 0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+}
+
+.nav-brand {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-brand span { font-size: 1.4rem; }
+
+.nav-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.nav-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+  background: transparent;
+  color: #cbb88a;
+}
+
+.nav-btn:hover          { background: rgba(201, 168, 76, 0.15); color: var(--gold); }
+.nav-btn.active         { background: var(--gold); color: var(--dark); }
+
+.nav-btn.admin-btn {
+  border: 1px solid var(--gold-dark);
+  color: var(--gold-dark);
+  margin-left: 12px;
+}
+.nav-btn.admin-btn:hover        { border-color: var(--gold); color: var(--gold); }
+.nav-btn.admin-btn.active       { background: var(--gold); color: var(--dark); border-color: var(--gold); }
+
+/* ════════════════════════════════════════════════════════
+   PÁGINAS (sistema de pestañas)
+════════════════════════════════════════════════════════ */
+.page {
+  display: none;
+  padding-top: 64px;
+  min-height: 100vh;
+}
+.page.active { display: block; }
+
+/* ════════════════════════════════════════════════════════
+   INICIO — HERO
+════════════════════════════════════════════════════════ */
+.home-hero {
+  min-height: calc(100vh - 64px);
+  background: linear-gradient(160deg, #0d1f3c 0%, #1a1208 50%, #3b1212 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 3rem 2rem;
+}
+
+.hero-ornament {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 40%, rgba(201,168,76,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 60%, rgba(201,168,76,0.06) 0%, transparent 50%);
+}
+
+.hero-cross {
+  font-size: 3rem;
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 40px rgba(201,168,76,0.6);
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 20px rgba(201,168,76,0.4); }
+  to   { text-shadow: 0 0 60px rgba(201,168,76,0.8), 0 0 100px rgba(201,168,76,0.3); }
+}
+
+.hero-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  color: var(--gold-light);
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  position: relative;
+}
+
+.hero-subtitle {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: #c4b08a;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.hero-divider {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 2rem auto;
+}
+
+/* ── Tarjetas de parroquia en el inicio ── */
+.parish-cards {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+  position: relative;
+}
+
+.parish-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 8px;
+  padding: 2.5rem 2rem;
+  width: 280px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.parish-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  transition: opacity 0.3s;
+}
+
+.parish-card.sc::before { background: linear-gradient(90deg, var(--sc-blue), var(--sc-accent)); }
+.parish-card.lj::before { background: linear-gradient(90deg, var(--lj-burgundy), var(--lj-accent)); }
+
+.parish-card:hover {
+  transform: translateY(-6px);
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+.card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--gold-light);
+  letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+.card-desc {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: #a89070;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+  line-height: 1.6;
+}
+
+.card-cta {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.parish-card.sc .card-cta       { background: var(--sc-blue); color: white; }
+.parish-card.sc .card-cta:hover { background: var(--sc-blue-light); }
+.parish-card.lj .card-cta       { background: var(--lj-burgundy); color: white; }
+.parish-card.lj .card-cta:hover { background: var(--lj-burgundy-light); }
+
+/* ════════════════════════════════════════════════════════
+   CABECERA DE CADA PARROQUIA
+════════════════════════════════════════════════════════ */
+.parish-header {
+  padding: 4rem 2rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.parish-header.sc {
+  background-image: url('foto1.jpg');
+  background-size: cover;
+  background-position: center 73%;
+  background-repeat: no-repeat;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.parish-header.lj {
+  background-image: url('foto2.jpg');
+  background-size: cover;
+  background-position: center 48%;
+  background-repeat: no-repeat;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Capa oscura semitransparente sobre la foto */
+.parish-header.sc .parish-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 22, 40, 0.45);
+}
+
+.parish-header.lj .parish-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 22, 40, 0.45);
+}
+
+.parish-header.lj .parish-header-text-box {  
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 2rem 3rem;
+  background: rgba(10, 22, 40, 0.52);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* Caja de texto con efecto vidrio esmerilado (blur) */
+.parish-header-text-box {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 2rem 3rem;
+  background: rgba(10, 22, 40, 0.52);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+
+.parish-header-ornament {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 70%);
+}
+
+.parish-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--gold-light);
+  letter-spacing: 2px;
+  position: relative;
+}
+
+.parish-subtitle {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: #c4a87a;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  position: relative;
+}
+
+.parish-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+/* ════════════════════════════════════════════════════════
+   SECCIONES — GRID DE TARJETAS
+════════════════════════════════════════════════════════ */
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.section-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.section-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+.section-card-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.sc .section-card-header { background: var(--sc-blue); }
+.lj .section-card-header { background: var(--lj-burgundy); }
+
+.section-card-header h3 {
+  font-family: 'Cinzel', serif;
+  color: white;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+.section-card-header .icon { font-size: 1.2rem; }
+
+.section-card-body {
+  padding: 1.5rem;
+  min-height: 120px;
+}
+
+/* ════════════════════════════════════════════════════════
+   AVISOS
+════════════════════════════════════════════════════════ */
+.notice-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0ebe0;
+}
+.notice-item:last-child { border-bottom: none; }
+
+.notice-date {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  color: var(--text-mid);
+  white-space: nowrap;
+  background: var(--cream);
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.notice-text {
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-dark);
+}
+
+.notice-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+  font-style: normal;
+}
+
+/* ════════════════════════════════════════════════════════
+   EVENTOS / FECHAS
+════════════════════════════════════════════════════════ */
+.event-item {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0ebe0;
+}
+.event-item:last-child { border-bottom: none; }
+
+.event-date-box {
+  min-width: 52px;
+  text-align: center;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sc .event-date-box .month { background: var(--sc-blue); }
+.lj .event-date-box .month { background: var(--lj-burgundy); }
+
+.event-date-box .month {
+  color: white;
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 4px;
+}
+
+.event-date-box .day {
+  background: white;
+  color: var(--text-dark);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  padding: 4px;
+  border: 1px solid #e0d5c0;
+  border-top: none;
+}
+
+.event-info h4 {
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  letter-spacing: 0.5px;
+}
+
+.event-info p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  margin-top: 2px;
+}
+
+/* ════════════════════════════════════════════════════════
+   HORARIO DE MISAS
+════════════════════════════════════════════════════════ */
+.schedule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #f0ebe0;
+  font-size: 0.88rem;
+}
+.schedule-item:last-child { border-bottom: none; }
+
+.schedule-day {
+  font-family: 'Cinzel', serif;
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  letter-spacing: 0.5px;
+}
+
+.schedule-time {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-dark);
+}
+
+/* ════════════════════════════════════════════════════════
+   GALERÍA DE FOTOS
+════════════════════════════════════════════════════════ */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  padding: 1rem;
+}
+
+.photo-thumb {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #e8dfc8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+.photo-thumb:hover img { transform: scale(1.08); }
+
+/* ════════════════════════════════════════════════════════
+   SECCIÓN COMPLETA (horario + galería)
+════════════════════════════════════════════════════════ */
+.full-section-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.full-section-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.sc .full-section-header { background: var(--sc-blue); }
+.lj .full-section-header { background: var(--lj-burgundy); }
+
+.full-section-header h3 {
+  font-family: 'Cinzel', serif;
+  color: white;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.full-section-body { padding: 1.5rem; }
+
+/* ════════════════════════════════════════════════════════
+   ESTADO VACÍO
+════════════════════════════════════════════════════════ */
+.empty-state {
+  text-align: center;
+  color: #bba870;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  padding: 1.5rem 0;
+  font-size: 0.9rem;
+}
+
+/* ════════════════════════════════════════════════════════
+   LIGHTBOX
+════════════════════════════════════════════════════════ */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox.active { display: flex; }
+
+.lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 6px;
+  box-shadow: 0 0 60px rgba(0,0,0,0.8);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.lightbox-close:hover { opacity: 1; }
+
+/* ════════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: var(--dark);
+  color: var(--gold-light);
+  padding: 12px 20px;
+  border-radius: 6px;
+  border-left: 3px solid var(--gold);
+  font-family: 'Lora', serif;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ════════════════════════════════════════════════════════
+   ADMINISTRADOR — LOGIN
+════════════════════════════════════════════════════════ */
+.admin-page { background: #f5f0e8; }
+
+.admin-login {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1208, #2d2010);
+}
+
+.login-box {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.login-box h2 {
+  font-family: 'Cinzel', serif;
+  color: var(--dark);
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.login-box > p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-mid);
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.error-msg {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-family: 'Lora', serif;
+  font-style: italic;
+}
+
+/* ════════════════════════════════════════════════════════
+   ADMINISTRADOR — FORMULARIOS COMPARTIDOS
+════════════════════════════════════════════════════════ */
+.form-group { margin-bottom: 1.25rem; text-align: left; }
+
+.form-group label {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  margin-bottom: 0.4rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 6px;
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: var(--dark);
+  color: var(--gold);
+  border: 1.5px solid var(--gold-dark);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: var(--gold); color: var(--dark); }
+
+/* ════════════════════════════════════════════════════════
+   ADMINISTRADOR — PANEL PRINCIPAL
+════════════════════════════════════════════════════════ */
+.admin-panel {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+.admin-panel h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  color: var(--dark);
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.admin-panel > p {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  color: var(--text-mid);
+  margin-bottom: 2.5rem;
+}
+
+.admin-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid #e0d5c0;
+  color: var(--text-mid);
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.logout-btn:hover { background: #fee2e2; border-color: #c0392b; color: #c0392b; }
+
+/* ── Pestañas del admin ── */
+.admin-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  padding: 8px 18px;
+  border-radius: 4px;
+  border: 1.5px solid #ccc;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+.admin-tab:hover       { border-color: var(--gold); color: var(--gold-dark); }
+.admin-tab.active      { background: var(--dark); color: var(--gold); border-color: var(--dark); }
+
+.admin-section         { display: none; }
+.admin-section.active  { display: block; }
+
+/* ── Tarjeta del admin ── */
+.admin-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-card h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--dark);
+  letter-spacing: 0.5px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1.5px solid #ede8dc;
+}
+
+/* ── Botones del admin ── */
+.btn-add {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background: var(--gold-dark);
+  color: white;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.btn-add:hover { background: var(--gold); color: var(--dark); }
+
+.btn-del {
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #c0392b;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+.btn-del:hover { background: #c0392b; color: white; }
+
+/* ── Lista del admin ── */
+.admin-list-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f0e8;
+}
+.admin-list-item:last-child { border-bottom: none; }
+
+.admin-list-item-text { flex: 1; }
+
+.admin-list-item-text strong {
+  font-family: 'Cinzel', serif;
+  font-size: 0.82rem;
+  color: var(--dark);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.admin-list-item-text span {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  font-family: 'Lora', serif;
+  font-style: italic;
+}
+
+/* ── Badges de parroquia ── */
+.parish-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+}
+.badge-sc { background: #dbeafe; color: var(--sc-blue); }
+.badge-lj { background: #fee2e2; color: var(--lj-burgundy); }
+
+/* ── Fotos en el admin ── */
+.photo-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.photo-admin-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #e8dfc8;
+}
+
+.photo-admin-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-admin-item .del-photo {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.photo-admin-item .del-photo:hover { background: #c0392b; }
+
+/* ── Zona de subida ── */
+.upload-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+.upload-zone:hover { border-color: var(--gold); background: #faf6ef; }
+.upload-zone p { font-family: 'Lora', serif; font-style: italic; color: #999; font-size: 0.9rem; }
+
+/* ════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .form-row           { grid-template-columns: 1fr; }
+  .parish-cards       { flex-direction: column; align-items: center; }
+  .admin-tabs         { gap: 4px; }
+  .admin-tab          { font-size: 0.65rem; padding: 6px 10px; }
+  nav                 { padding: 0 1rem; }
+  .nav-brand          { font-size: 0.8rem; }
+}
