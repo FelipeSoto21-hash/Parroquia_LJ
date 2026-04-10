@@ -39,7 +39,7 @@ body {
    NAVEGACIÓN
 ════════════════════════════════════════════════════════ */
 nav {
-  position: sticky;
+  position: fixed;
   top: 0;
   width: 100%;
   z-index: 100;
@@ -49,7 +49,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 0 2rem;
   height: 64px;
 }
 
