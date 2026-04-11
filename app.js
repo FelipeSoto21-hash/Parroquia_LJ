@@ -145,7 +145,7 @@ const ADMIN_PASS = 'parroquia2024';
 
 function doLogin() {
   const user    = document.getElementById('login-user').value.trim();
-  const pass    = document.getElementById('login-pass').value;
+  const pass    = document.getElementById('login-pass').value.trim();
   const errorEl = document.getElementById('login-error');
 
   if (user === ADMIN_USER && pass === ADMIN_PASS) {
