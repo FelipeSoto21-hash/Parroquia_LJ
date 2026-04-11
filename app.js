@@ -1,24 +1,120 @@
 /* ════════════════════════════════════════════════════════
    app.js — Parroquias San Crescente & Nuestra Señora de Luján
+   Base de datos: Supabase (JS SDK v2)
+
+   TABLAS USADAS (esquema real):
+   ─────────────────────────────
+   parishes        → id (text PK), name, about_us, updated_at
+   notices         → id (uuid PK), parish_id (→parishes.id), title, content, created_at
+   events          → id (uuid PK), parish_id, title, event_date, description, created_at
+   photos          → id (uuid PK), parish_id, url, description, created_at
+
+   TABLAS EXTRA (ver supabase_extra.sql para crearlas):
+   ─────────────────────────────────────────────────────
+   schedules       → id (uuid PK), parish_id, day, time, created_at
+   team_members    → id (uuid PK), parish_id, name, role, phone, email,
+                     instagram, facebook, photo_url, created_at
 ════════════════════════════════════════════════════════ */
 
+
 // ════════════════════════════════════════════════════════
-// ESTADO GLOBAL
+// CONFIGURACIÓN SUPABASE
 // ════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://ojosqscdzjehutitdfoz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_laJxknrjuvEn4FvHN0wIJg_hROPOPdx';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// IDs de parroquia tal como están en la tabla `parishes`
+const PARISH_IDS = { sc: 'sc', lj: 'lj' };
+
+
+// ════════════════════════════════════════════════════════
+// ESTADO LOCAL (caché en memoria)
+// ════════════════════════════════════════════════════════
+
 const state = {
-  notices:   [],
-  events:    [],
-  schedules: [],
-  photos: { sc: [], lj: [] },
-  team: {
-    sc: { description: '', members: [] },
-    lj: { description: '', members: [] }
-  }
+  parishes: {
+    sc: { id: 'sc', name: 'Parroquia San Crescente',           about_us: '' },
+    lj: { id: 'lj', name: 'Parroquia Nuestra Señora de Luján', about_us: '' }
+  },
+  notices:   [],          // todos los avisos de ambas parroquias
+  events:    [],          // todos los eventos
+  photos:    { sc: [], lj: [] },
+  schedules: { sc: [], lj: [] },
+  team:      { sc: [], lj: [] }
 };
 
 
 // ════════════════════════════════════════════════════════
-// NAVEGACIÓN ENTRE PÁGINAS
+// CARGA INICIAL DESDE SUPABASE
+// ════════════════════════════════════════════════════════
+
+async function loadAllData() {
+  showLoading(true);
+  try {
+    // Cargar todo en paralelo
+    const [
+      { data: parishes,  error: eParishes  },
+      { data: notices,   error: eNotices   },
+      { data: events,    error: eEvents    },
+      { data: photos,    error: ePhotos    },
+      { data: schedules, error: eSchedules },
+      { data: team,      error: eTeam      }
+    ] = await Promise.all([
+      db.from('parishes').select('*'),
+      db.from('notices').select('*').order('created_at', { ascending: false }),
+      db.from('events').select('*').order('event_date', { ascending: true }),
+      db.from('photos').select('*').order('created_at', { ascending: true }),
+      db.from('schedules').select('*').order('created_at', { ascending: true }),
+      db.from('team_members').select('*').order('created_at', { ascending: true })
+    ]);
+
+    // Parroquias → guardar about_us en estado local
+    if (parishes) {
+      parishes.forEach(p => {
+        if (state.parishes[p.id]) {
+          state.parishes[p.id].about_us = p.about_us || '';
+          state.parishes[p.id].name     = p.name;
+        }
+      });
+    }
+
+    // Avisos
+    state.notices = notices || [];
+
+    // Eventos
+    state.events = events || [];
+
+    // Fotos separadas por parroquia
+    const allPhotos = photos || [];
+    state.photos.sc = allPhotos.filter(p => p.parish_id === 'sc');
+    state.photos.lj = allPhotos.filter(p => p.parish_id === 'lj');
+
+    // Horarios (tabla extra)
+    const allSchedules = schedules || [];
+    state.schedules.sc = allSchedules.filter(s => s.parish_id === 'sc');
+    state.schedules.lj = allSchedules.filter(s => s.parish_id === 'lj');
+
+    // Equipo (tabla extra)
+    const allTeam = team || [];
+    state.team.sc = allTeam.filter(m => m.parish_id === 'sc');
+    state.team.lj = allTeam.filter(m => m.parish_id === 'lj');
+
+    renderAll();
+  } catch (err) {
+    console.error('Error cargando datos:', err);
+    showToast('⚠️ Error al conectar con la base de datos.');
+  } finally {
+    showLoading(false);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════
+// NAVEGACIÓN
 // ════════════════════════════════════════════════════════
 
 const PAGE_ORDER = ['home', 'sc', 'lj', 'quienes', 'admin'];
@@ -26,35 +122,26 @@ const PAGE_ORDER = ['home', 'sc', 'lj', 'quienes', 'admin'];
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-
   document.querySelectorAll('.nav-btn').forEach((btn, i) => {
     btn.classList.toggle('active', PAGE_ORDER[i] === id);
   });
-
   renderAll();
 }
 
-
-// ════════════════════════════════════════════════════════
-// PESTAÑAS QUIÉNES SOMOS (SC / LJ)
-// ════════════════════════════════════════════════════════
-
 function switchQuienesTab(parish) {
-  // Tabs
-  document.getElementById('qtab-sc').classList.toggle('active', parish === 'sc');
-  document.getElementById('qtab-lj').classList.toggle('active', parish === 'lj');
-  // Paneles
-  document.getElementById('qpanel-sc').classList.toggle('active', parish === 'sc');
-  document.getElementById('qpanel-lj').classList.toggle('active', parish === 'lj');
+  ['sc', 'lj'].forEach(p => {
+    document.getElementById('qtab-'  + p).classList.toggle('active', p === parish);
+    document.getElementById('qpanel-'+ p).classList.toggle('active', p === parish);
+  });
 }
 
 
 // ════════════════════════════════════════════════════════
-// AUTENTICACIÓN
+// AUTENTICACIÓN ADMIN
 // ════════════════════════════════════════════════════════
 
-const ADMIN_USER = 'ANDRESVALENCIA';
-const ADMIN_PASS = 'parroquias2026';
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'parroquia2024';
 
 function doLogin() {
   const user    = document.getElementById('login-user').value.trim();
@@ -65,8 +152,12 @@ function doLogin() {
     document.getElementById('admin-login-view').style.display = 'none';
     document.getElementById('admin-panel-view').style.display = 'block';
     errorEl.style.display = 'none';
-    renderAdminLists();
-    renderAdminTeam();
+    // Rellenar campos de descripción si ya hay datos
+    const scDesc = document.getElementById('tm-sc-description');
+    const ljDesc = document.getElementById('tm-lj-description');
+    if (scDesc && !scDesc.value) scDesc.value = state.parishes.sc.about_us;
+    if (ljDesc && !ljDesc.value) ljDesc.value = state.parishes.lj.about_us;
+    renderAll();
   } else {
     errorEl.textContent = 'Usuario o contraseña incorrectos.';
     errorEl.style.display = 'block';
@@ -82,7 +173,7 @@ function doLogout() {
 
 
 // ════════════════════════════════════════════════════════
-// PESTAÑAS DEL PANEL ADMIN
+// PESTAÑAS PANEL ADMIN
 // ════════════════════════════════════════════════════════
 
 const ADMIN_TAB_ORDER = ['notices', 'events', 'schedule', 'photos', 'team'];
@@ -97,24 +188,36 @@ function switchAdminTab(tab) {
 
 
 // ════════════════════════════════════════════════════════
-// AVISOS
+// AVISOS  (tabla: notices → parish_id, title, content)
 // ════════════════════════════════════════════════════════
 
-function addNotice() {
-  const parish = document.getElementById('n-parish').value;
-  const title  = document.getElementById('n-title').value.trim();
-  const body   = document.getElementById('n-body').value.trim();
+async function addNotice() {
+  const parish_id = document.getElementById('n-parish').value;
+  const title     = document.getElementById('n-title').value.trim();
+  const content   = document.getElementById('n-content').value.trim();
+
   if (!title) { showToast('Por favor ingresa un título.'); return; }
 
-  const today = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' });
-  state.notices.unshift({ id: Date.now(), parish, title, body, date: today });
-  document.getElementById('n-title').value = '';
-  document.getElementById('n-body').value  = '';
+  showLoading(true);
+  const { data, error } = await db
+    .from('notices')
+    .insert([{ parish_id, title, content }])
+    .select()
+    .single();
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar el aviso.'); console.error(error); return; }
+
+  state.notices.unshift(data);
+  document.getElementById('n-title').value   = '';
+  document.getElementById('n-content').value = '';
   renderAll();
   showToast('Aviso agregado ✓');
 }
 
-function deleteNotice(id) {
+async function deleteNotice(id) {
+  const { error } = await db.from('notices').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar el aviso.'); return; }
   state.notices = state.notices.filter(n => n.id !== id);
   renderAll();
   showToast('Aviso eliminado.');
@@ -122,18 +225,29 @@ function deleteNotice(id) {
 
 
 // ════════════════════════════════════════════════════════
-// EVENTOS / FECHAS
+// EVENTOS  (tabla: events → parish_id, title, event_date, description)
 // ════════════════════════════════════════════════════════
 
-function addEvent() {
-  const parish = document.getElementById('e-parish').value;
-  const title  = document.getElementById('e-title').value.trim();
-  const date   = document.getElementById('e-date').value;
-  const desc   = document.getElementById('e-desc').value.trim();
-  if (!title || !date) { showToast('Completa título y fecha.'); return; }
+async function addEvent() {
+  const parish_id   = document.getElementById('e-parish').value;
+  const title       = document.getElementById('e-title').value.trim();
+  const event_date  = document.getElementById('e-date').value;
+  const description = document.getElementById('e-desc').value.trim();
 
-  state.events.push({ id: Date.now(), parish, title, date, desc });
-  state.events.sort((a, b) => a.date.localeCompare(b.date));
+  if (!title || !event_date) { showToast('Completa título y fecha.'); return; }
+
+  showLoading(true);
+  const { data, error } = await db
+    .from('events')
+    .insert([{ parish_id, title, event_date, description }])
+    .select()
+    .single();
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar el evento.'); console.error(error); return; }
+
+  state.events.push(data);
+  state.events.sort((a, b) => a.event_date.localeCompare(b.event_date));
   document.getElementById('e-title').value = '';
   document.getElementById('e-date').value  = '';
   document.getElementById('e-desc').value  = '';
@@ -141,7 +255,9 @@ function addEvent() {
   showToast('Evento agregado ✓');
 }
 
-function deleteEvent(id) {
+async function deleteEvent(id) {
+  const { error } = await db.from('events').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar el evento.'); return; }
   state.events = state.events.filter(e => e.id !== id);
   renderAll();
   showToast('Evento eliminado.');
@@ -149,101 +265,168 @@ function deleteEvent(id) {
 
 
 // ════════════════════════════════════════════════════════
-// HORARIOS
+// HORARIOS  (tabla extra: schedules → parish_id, day, time)
 // ════════════════════════════════════════════════════════
 
-function addSchedule() {
-  const parish = document.getElementById('s-parish').value;
-  const day    = document.getElementById('s-day').value.trim();
-  const time   = document.getElementById('s-time').value.trim();
+async function addSchedule() {
+  const parish_id = document.getElementById('s-parish').value;
+  const day       = document.getElementById('s-day').value.trim();
+  const time      = document.getElementById('s-time').value.trim();
+
   if (!day || !time) { showToast('Completa día y hora.'); return; }
 
-  state.schedules.push({ id: Date.now(), parish, day, time });
+  showLoading(true);
+  const { data, error } = await db
+    .from('schedules')
+    .insert([{ parish_id, day, time }])
+    .select()
+    .single();
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar el horario.'); console.error(error); return; }
+
+  state.schedules[parish_id].push(data);
   document.getElementById('s-day').value  = '';
   document.getElementById('s-time').value = '';
   renderAll();
   showToast('Horario agregado ✓');
 }
 
-function deleteSchedule(id) {
-  state.schedules = state.schedules.filter(s => s.id !== id);
+async function deleteSchedule(id, parish_id) {
+  const { error } = await db.from('schedules').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar el horario.'); return; }
+  state.schedules[parish_id] = state.schedules[parish_id].filter(s => s.id !== id);
   renderAll();
   showToast('Horario eliminado.');
 }
 
 
 // ════════════════════════════════════════════════════════
-// FOTOS DE GALERÍA
+// FOTOS  (tabla: photos → parish_id, url, description)
+// Soporta URL directa O subida de archivo (convertida a base64 como URL)
 // ════════════════════════════════════════════════════════
 
-function handlePhotos(e) {
-  const parish = document.getElementById('p-parish').value;
-  const files  = Array.from(e.target.files);
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      state.photos[parish].push({ id: Date.now() + Math.random(), src: ev.target.result });
-      renderAll();
-    };
-    reader.readAsDataURL(file);
-  });
-  e.target.value = '';
-  showToast(`${files.length} foto(s) subida(s) ✓`);
+// Previsualización al elegir archivo
+function handlePhotoFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('p-base64').value = ev.target.result;
+    document.getElementById('p-url').value    = '';   // limpiar campo URL
+    const preview = document.getElementById('photo-preview');
+    preview.src = ev.target.result;
+    document.getElementById('photo-preview-wrap').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
 }
 
-function deletePhoto(parish, id) {
-  state.photos[parish] = state.photos[parish].filter(p => p.id !== id);
+async function addPhoto() {
+  const parish_id   = document.getElementById('p-parish').value;
+  const description = document.getElementById('p-desc').value.trim();
+  const urlField    = document.getElementById('p-url').value.trim();
+  const base64Field = document.getElementById('p-base64').value;
+
+  // Usar URL si existe, si no usar base64
+  const url = urlField || base64Field;
+  if (!url) { showToast('Agrega una URL o sube una imagen.'); return; }
+
+  showLoading(true);
+  const { data, error } = await db
+    .from('photos')
+    .insert([{ parish_id, url, description }])
+    .select()
+    .single();
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar la foto.'); console.error(error); return; }
+
+  state.photos[parish_id].push(data);
+
+  // Limpiar formulario
+  document.getElementById('p-url').value    = '';
+  document.getElementById('p-desc').value   = '';
+  document.getElementById('p-base64').value = '';
+  document.getElementById('photo-preview-wrap').style.display = 'none';
+  document.getElementById('photo-upload-input').value = '';
+
+  renderAll();
+  showToast('Foto agregada ✓');
+}
+
+async function deletePhoto(id, parish_id) {
+  const { error } = await db.from('photos').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar la foto.'); return; }
+  state.photos[parish_id] = state.photos[parish_id].filter(p => p.id !== id);
   renderAll();
   showToast('Foto eliminada.');
 }
 
 
 // ════════════════════════════════════════════════════════
-// QUIÉNES SOMOS — EQUIPO
+// QUIÉNES SOMOS — about_us (tabla: parishes → about_us)
 // ════════════════════════════════════════════════════════
 
-/**
- * Guarda el texto descriptivo de la parroquia indicada.
- * @param {'sc'|'lj'} parish
- */
-function saveTeamDescription(parish) {
-  const text = document.getElementById('tm-' + parish + '-description').value.trim();
-  state.team[parish].description = text;
+async function saveParishAbout(parish_id) {
+  const about_us = document.getElementById('tm-' + parish_id + '-description').value.trim();
+
+  showLoading(true);
+  const { error } = await db
+    .from('parishes')
+    .update({ about_us, updated_at: new Date().toISOString() })
+    .eq('id', parish_id);
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar la descripción.'); console.error(error); return; }
+
+  state.parishes[parish_id].about_us = about_us;
   renderAll();
   showToast('Descripción guardada ✓');
 }
 
-/** Previsualiza la foto cargada para un nuevo miembro del equipo. */
+
+// ════════════════════════════════════════════════════════
+// QUIÉNES SOMOS — Personas (tabla extra: team_members)
+// ════════════════════════════════════════════════════════
+
 function previewTeamPhoto(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    document.getElementById('tm-photo-data').value = ev.target.result;
+    document.getElementById('tm-photo-data').value  = ev.target.result;
     document.getElementById('tm-photo-label').textContent = '✅ ' + file.name;
   };
   reader.readAsDataURL(file);
 }
 
-/** Agrega un nuevo miembro al equipo de la parroquia seleccionada. */
-function addTeamMember() {
-  const parish    = document.getElementById('tm-parish').value;
+async function addTeamMember() {
+  const parish_id = document.getElementById('tm-parish').value;
   const name      = document.getElementById('tm-name').value.trim();
   const role      = document.getElementById('tm-role').value.trim();
   const phone     = document.getElementById('tm-phone').value.trim();
   const email     = document.getElementById('tm-email').value.trim();
   const instagram = document.getElementById('tm-instagram').value.trim();
   const facebook  = document.getElementById('tm-facebook').value.trim();
-  const photo     = document.getElementById('tm-photo-data').value;
+  const photo_url = document.getElementById('tm-photo-data').value;
 
   if (!name || !role) { showToast('El nombre y el cargo son obligatorios.'); return; }
 
-  state.team[parish].members.push({ id: Date.now(), name, role, phone, email, instagram, facebook, photo });
+  showLoading(true);
+  const { data, error } = await db
+    .from('team_members')
+    .insert([{ parish_id, name, role, phone, email, instagram, facebook, photo_url }])
+    .select()
+    .single();
+  showLoading(false);
+
+  if (error) { showToast('⚠️ Error al guardar la persona.'); console.error(error); return; }
+
+  state.team[parish_id].push(data);
 
   // Limpiar formulario
-  ['tm-name','tm-role','tm-phone','tm-email','tm-instagram','tm-facebook','tm-photo-data'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  ['tm-name','tm-role','tm-phone','tm-email','tm-instagram','tm-facebook','tm-photo-data']
+    .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('tm-photo-label').textContent = '📷 Subir foto';
   document.getElementById('tm-photo-input').value = '';
 
@@ -251,87 +434,87 @@ function addTeamMember() {
   showToast('Persona agregada ✓');
 }
 
-/**
- * Elimina un miembro del equipo de la parroquia indicada.
- * @param {'sc'|'lj'} parish
- * @param {number} id
- */
-function deleteTeamMember(parish, id) {
-  state.team[parish].members = state.team[parish].members.filter(m => m.id !== id);
+async function deleteTeamMember(id, parish_id) {
+  const { error } = await db.from('team_members').delete().eq('id', id);
+  if (error) { showToast('⚠️ Error al eliminar la persona.'); return; }
+  state.team[parish_id] = state.team[parish_id].filter(m => m.id !== id);
   renderAll();
   showToast('Persona eliminada.');
 }
 
 
 // ════════════════════════════════════════════════════════
-// RENDERIZADO — FUNCIONES PRINCIPALES
+// RENDERIZADO PRINCIPAL
 // ════════════════════════════════════════════════════════
 
 function renderAll() {
-  renderParishPage('sc');
-  renderParishPage('lj');
+  ['sc', 'lj'].forEach(p => {
+    renderNotices(p);
+    renderEvents(p);
+    renderSchedules(p);
+    renderPhotos(p);
+  });
   renderQuienesSomos();
   renderAdminLists();
   renderAdminTeam();
 }
 
-/** Renderiza avisos, fechas, horarios y fotos de una parroquia. */
-function renderParishPage(p) {
-  renderNoticesPublic(p);
-  renderEventsPublic(p);
-  renderSchedulePublic(p);
-  renderPhotosPublic(p);
-}
-
-
-// ════════════════════════════════════════════════════════
-// RENDERIZADO — PÁGINA PÚBLICA
-// ════════════════════════════════════════════════════════
-
-function renderNoticesPublic(p) {
-  const notices = state.notices.filter(n => n.parish === p);
+// ── Avisos públicos ──────────────────────────────────────
+function renderNotices(p) {
   const el = document.getElementById(p + '-notices-display');
   if (!el) return;
-  el.innerHTML = notices.length
-    ? notices.map(n => `
-        <div class="notice-item">
-          <div class="notice-date">${n.date}</div>
-          <div class="notice-text">
-            <span class="notice-title">${esc(n.title)}</span>
-            ${n.body ? esc(n.body) : ''}
-          </div>
-        </div>`).join('')
-    : '<div class="empty-state">No hay avisos por el momento.</div>';
-}
+  const list = state.notices.filter(n => n.parish_id === p);
 
-function renderEventsPublic(p) {
-  const events = state.events.filter(e => e.parish === p);
-  const el = document.getElementById(p + '-events-display');
-  if (!el) return;
-  if (!events.length) { el.innerHTML = '<div class="empty-state">No hay eventos próximos.</div>'; return; }
-  el.innerHTML = events.map(ev => {
-    const d     = new Date(ev.date + 'T00:00:00');
-    const day   = d.toLocaleDateString('es-CL', { day:'2-digit' });
-    const month = d.toLocaleDateString('es-CL', { month:'short' }).toUpperCase();
+  if (!list.length) { el.innerHTML = '<div class="empty-state">No hay avisos por el momento.</div>'; return; }
+
+  el.innerHTML = list.map(n => {
+    const date = new Date(n.created_at).toLocaleDateString('es-CL',
+      { day:'2-digit', month:'short', year:'numeric' });
     return `
-      <div class="event-item">
-        <div class="event-date-box">
-          <div class="month">${month}</div><div class="day">${day}</div>
-        </div>
-        <div class="event-info">
-          <h4>${esc(ev.title)}</h4>
-          ${ev.desc ? `<p>${esc(ev.desc)}</p>` : ''}
+      <div class="notice-item">
+        <div class="notice-date">${date}</div>
+        <div class="notice-text">
+          <span class="notice-title">${esc(n.title)}</span>
+          ${n.content ? esc(n.content) : ''}
         </div>
       </div>`;
   }).join('');
 }
 
-function renderSchedulePublic(p) {
-  const scheds = state.schedules.filter(s => s.parish === p);
+// ── Eventos públicos ─────────────────────────────────────
+function renderEvents(p) {
+  const el = document.getElementById(p + '-events-display');
+  if (!el) return;
+  const list = state.events.filter(e => e.parish_id === p);
+
+  if (!list.length) { el.innerHTML = '<div class="empty-state">No hay eventos próximos.</div>'; return; }
+
+  el.innerHTML = list.map(ev => {
+    const d     = new Date(ev.event_date + 'T00:00:00');
+    const day   = d.toLocaleDateString('es-CL', { day:'2-digit' });
+    const month = d.toLocaleDateString('es-CL', { month:'short' }).toUpperCase();
+    return `
+      <div class="event-item">
+        <div class="event-date-box">
+          <div class="month">${month}</div>
+          <div class="day">${day}</div>
+        </div>
+        <div class="event-info">
+          <h4>${esc(ev.title)}</h4>
+          ${ev.description ? `<p>${esc(ev.description)}</p>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Horarios públicos ────────────────────────────────────
+function renderSchedules(p) {
   const el = document.getElementById(p + '-schedule-display');
   if (!el) return;
-  el.innerHTML = scheds.length
-    ? scheds.map(s => `
+  const list = state.schedules[p];
+
+  el.innerHTML = list.length
+    ? list.map(s => `
         <div class="schedule-item">
           <span class="schedule-day">${esc(s.day)}</span>
           <span class="schedule-time">${esc(s.time)}</span>
@@ -339,93 +522,90 @@ function renderSchedulePublic(p) {
     : '<div class="empty-state">Horario no disponible aún.</div>';
 }
 
-function renderPhotosPublic(p) {
-  const photos = state.photos[p];
+// ── Fotos públicas ───────────────────────────────────────
+function renderPhotos(p) {
   const el = document.getElementById(p + '-photos-display');
   if (!el) return;
-  el.innerHTML = photos.length
-    ? photos.map(ph => `
-        <div class="photo-thumb" onclick="openLightbox('${ph.src}')">
-          <img src="${ph.src}" alt="Foto parroquia">
+  const list = state.photos[p];
+
+  el.innerHTML = list.length
+    ? list.map(ph => `
+        <div class="photo-thumb" onclick="openLightbox('${ph.url}')">
+          <img src="${ph.url}" alt="${esc(ph.description || 'Foto')}">
         </div>`).join('')
     : '<div class="empty-state" style="grid-column:1/-1;">No hay fotos aún.</div>';
 }
 
-
-// ════════════════════════════════════════════════════════
-// RENDERIZADO — PÁGINA QUIÉNES SOMOS
-// ════════════════════════════════════════════════════════
-
+// ── Quiénes Somos ────────────────────────────────────────
 function renderQuienesSomos() {
   ['sc', 'lj'].forEach(p => {
-    // Descripción
+    // Descripción (about_us de parishes)
     const descWrap = document.getElementById('qdesc-' + p + '-wrap');
     const descText = document.getElementById('qdesc-' + p);
     if (descWrap && descText) {
-      if (state.team[p].description) {
-        descText.textContent = state.team[p].description;
-        descWrap.style.display = 'block';
-      } else {
-        descWrap.style.display = 'none';
-      }
+      const txt = state.parishes[p].about_us;
+      descText.textContent   = txt;
+      descWrap.style.display = txt ? 'block' : 'none';
     }
 
     // Tarjetas del equipo
     const grid = document.getElementById('qteam-' + p);
     if (!grid) return;
-    const members = state.team[p].members;
+    const members = state.team[p];
     grid.innerHTML = members.length
       ? members.map(m => buildTeamCard(m, p)).join('')
       : '<div class="empty-state" style="grid-column:1/-1;">No hay personas registradas aún.</div>';
   });
 }
 
-/** Construye el HTML de una tarjeta de persona del equipo. */
 function buildTeamCard(m, parish) {
   const igSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
   const fbSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
-
-  const roleColor = parish === 'sc' ? 'var(--sc-blue)' : 'var(--lj-burgundy)';
+  const color = parish === 'sc' ? 'var(--sc-blue)' : 'var(--lj-burgundy)';
 
   return `
     <div class="team-card">
       <div class="team-photo-wrap">
-        ${m.photo
-          ? `<img src="${m.photo}" alt="${esc(m.name)}" class="team-photo">`
+        ${m.photo_url
+          ? `<img src="${m.photo_url}" alt="${esc(m.name)}" class="team-photo">`
           : `<div class="team-photo-placeholder">👤</div>`}
       </div>
       <div class="team-info">
         <h4 class="team-name">${esc(m.name)}</h4>
-        <span class="team-role" style="background:${roleColor};">${esc(m.role)}</span>
+        <span class="team-role" style="background:${color};">${esc(m.role)}</span>
         <div class="team-contacts">
-          ${m.phone     ? `<a href="tel:${esc(m.phone)}" class="team-contact-link phone">📞 ${esc(m.phone)}</a>` : ''}
-          ${m.email     ? `<a href="mailto:${esc(m.email)}" class="team-contact-link email">✉️ ${esc(m.email)}</a>` : ''}
+          ${m.phone     ? `<a href="tel:${esc(m.phone)}"                          class="team-contact-link phone">📞 ${esc(m.phone)}</a>` : ''}
+          ${m.email     ? `<a href="mailto:${esc(m.email)}"                        class="team-contact-link email">✉️ ${esc(m.email)}</a>` : ''}
           ${m.instagram ? `<a href="https://instagram.com/${esc(m.instagram)}" target="_blank" class="team-contact-link instagram">${igSVG} @${esc(m.instagram)}</a>` : ''}
-          ${m.facebook  ? `<a href="https://facebook.com/${esc(m.facebook)}" target="_blank" class="team-contact-link facebook">${fbSVG} ${esc(m.facebook)}</a>` : ''}
+          ${m.facebook  ? `<a href="https://facebook.com/${esc(m.facebook)}"  target="_blank" class="team-contact-link facebook">${fbSVG} ${esc(m.facebook)}</a>` : ''}
         </div>
       </div>
     </div>`;
 }
 
-
-// ════════════════════════════════════════════════════════
-// RENDERIZADO — PANEL ADMIN
-// ════════════════════════════════════════════════════════
-
+// ── Admin: listas de contenido ───────────────────────────
 function renderAdminLists() {
   const noticesEl = document.getElementById('admin-notices-list');
   if (!noticesEl) return;
 
   // Avisos
   noticesEl.innerHTML = state.notices.length
-    ? state.notices.map(n => `
-        <div class="admin-list-item">
-          <div class="admin-list-item-text">
-            <strong><span class="parish-badge ${n.parish==='sc'?'badge-sc':'badge-lj'}">${n.parish==='sc'?'SC':'LJ'}</span>${esc(n.title)}</strong>
-            <span>${esc(n.body)} · ${n.date}</span>
-          </div>
-          <button class="btn-del" onclick="deleteNotice(${n.id})">✕</button>
-        </div>`).join('')
+    ? state.notices.map(n => {
+        const date = new Date(n.created_at).toLocaleDateString('es-CL',
+          { day:'2-digit', month:'short', year:'numeric' });
+        return `
+          <div class="admin-list-item">
+            <div class="admin-list-item-text">
+              <strong>
+                <span class="parish-badge ${n.parish_id==='sc'?'badge-sc':'badge-lj'}">
+                  ${n.parish_id==='sc'?'SC':'LJ'}
+                </span>${esc(n.title)}
+              </strong>
+              <span>${esc(n.content||'')} · ${date}</span>
+            </div>
+            <button class="btn-del" onclick="deleteNotice('${n.id}')">✕</button>
+          </div>`;
+      }).join('')
     : '<div class="empty-state">No hay avisos.</div>';
 
   // Eventos
@@ -434,65 +614,75 @@ function renderAdminLists() {
     ? state.events.map(ev => `
         <div class="admin-list-item">
           <div class="admin-list-item-text">
-            <strong><span class="parish-badge ${ev.parish==='sc'?'badge-sc':'badge-lj'}">${ev.parish==='sc'?'SC':'LJ'}</span>${esc(ev.title)}</strong>
-            <span>${ev.date}${ev.desc?' · '+esc(ev.desc):''}</span>
+            <strong>
+              <span class="parish-badge ${ev.parish_id==='sc'?'badge-sc':'badge-lj'}">
+                ${ev.parish_id==='sc'?'SC':'LJ'}
+              </span>${esc(ev.title)}
+            </strong>
+            <span>${ev.event_date}${ev.description?' · '+esc(ev.description):''}</span>
           </div>
-          <button class="btn-del" onclick="deleteEvent(${ev.id})">✕</button>
+          <button class="btn-del" onclick="deleteEvent('${ev.id}')">✕</button>
         </div>`).join('')
     : '<div class="empty-state">No hay eventos.</div>';
 
   // Horarios
   const schedEl = document.getElementById('admin-schedule-list');
-  schedEl.innerHTML = state.schedules.length
-    ? state.schedules.map(s => `
+  const allSchedules = [...state.schedules.sc, ...state.schedules.lj];
+  schedEl.innerHTML = allSchedules.length
+    ? allSchedules.map(s => `
         <div class="admin-list-item">
           <div class="admin-list-item-text">
-            <strong><span class="parish-badge ${s.parish==='sc'?'badge-sc':'badge-lj'}">${s.parish==='sc'?'SC':'LJ'}</span>${esc(s.day)}</strong>
+            <strong>
+              <span class="parish-badge ${s.parish_id==='sc'?'badge-sc':'badge-lj'}">
+                ${s.parish_id==='sc'?'SC':'LJ'}
+              </span>${esc(s.day)}
+            </strong>
             <span>${esc(s.time)}</span>
           </div>
-          <button class="btn-del" onclick="deleteSchedule(${s.id})">✕</button>
+          <button class="btn-del" onclick="deleteSchedule('${s.id}','${s.parish_id}')">✕</button>
         </div>`).join('')
     : '<div class="empty-state">No hay horarios.</div>';
 
   // Fotos
-  ['sc','lj'].forEach(p => {
+  ['sc', 'lj'].forEach(p => {
     const grid = document.getElementById('admin-' + p + '-photos');
     if (!grid) return;
     grid.innerHTML = state.photos[p].length
       ? state.photos[p].map(ph => `
           <div class="photo-admin-item">
-            <img src="${ph.src}" alt="">
-            <button class="del-photo" onclick="deletePhoto('${p}',${ph.id})">✕</button>
+            <img src="${ph.url}" alt="${esc(ph.description||'')}">
+            <button class="del-photo" onclick="deletePhoto('${ph.id}','${p}')">✕</button>
           </div>`).join('')
       : '<div class="empty-state">Sin fotos.</div>';
   });
 }
 
+// ── Admin: equipo ────────────────────────────────────────
 function renderAdminTeam() {
-  ['sc','lj'].forEach(p => {
-    // Rellenar textarea de descripción si ya tiene valor guardado
-    const descInput = document.getElementById('tm-' + p + '-description');
-    if (descInput && state.team[p].description && !descInput.value) {
-      descInput.value = state.team[p].description;
+  ['sc', 'lj'].forEach(p => {
+    // Rellenar textarea de descripción
+    const descEl = document.getElementById('tm-' + p + '-description');
+    if (descEl && !descEl.value && state.parishes[p].about_us) {
+      descEl.value = state.parishes[p].about_us;
     }
 
     const listEl = document.getElementById('admin-team-' + p + '-list');
     if (!listEl) return;
-    const members = state.team[p].members;
+    const members = state.team[p];
+
     listEl.innerHTML = members.length
       ? members.map(m => `
           <div class="admin-list-item">
             <div style="display:flex;align-items:center;gap:0.75rem;flex:1;">
-              ${m.photo
-                ? `<img src="${m.photo}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e0d5c0;">`
-                : `<div style="width:44px;height:44px;border-radius:50%;background:#e8dfc8;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👤</div>`
-              }
+              ${m.photo_url
+                ? `<img src="${m.photo_url}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #e0d5c0;">`
+                : `<div style="width:44px;height:44px;border-radius:50%;background:#e8dfc8;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👤</div>`}
               <div class="admin-list-item-text">
                 <strong>${esc(m.name)}</strong>
                 <span>${esc(m.role)}${m.phone?' · 📞 '+esc(m.phone):''}${m.email?' · ✉️ '+esc(m.email):''}</span>
               </div>
             </div>
-            <button class="btn-del" onclick="deleteTeamMember('${p}',${m.id})">✕</button>
+            <button class="btn-del" onclick="deleteTeamMember('${m.id}','${p}')">✕</button>
           </div>`).join('')
       : '<div class="empty-state">No hay personas registradas.</div>';
   });
@@ -507,7 +697,6 @@ function openLightbox(src) {
   document.getElementById('lightbox-img').src = src;
   document.getElementById('lightbox').classList.add('active');
 }
-
 function closeLightbox() {
   document.getElementById('lightbox').classList.remove('active');
 }
@@ -520,10 +709,10 @@ function closeLightbox() {
 function esc(str) {
   if (!str) return '';
   return str
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function showToast(msg) {
@@ -533,8 +722,12 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+function showLoading(visible) {
+  document.getElementById('global-loading').style.display = visible ? 'flex' : 'none';
+}
+
 
 // ════════════════════════════════════════════════════════
 // INICIALIZACIÓN
 // ════════════════════════════════════════════════════════
-renderAll();
+loadAllData();

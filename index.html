@@ -6,8 +6,26 @@
   <title>Parroquias San Crescente & Nuestra Señora de Luján</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,500;1,400&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <!-- Supabase JS SDK v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- ── Spinner de carga global ── -->
+<div id="global-loading">
+  <div class="spinner"></div>
+  <p class="spinner-text">Cargando...</p>
+</div>
+
+<!-- Toast de notificaciones -->
+<div class="toast" id="toast"></div>
+
+<!-- Lightbox de fotos -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
 
 <!-- ════════════════════════════════════
      NAVEGACIÓN
@@ -22,13 +40,6 @@
     <button class="nav-btn admin-btn" onclick="showPage('admin')">⚙ Admin</button>
   </div>
 </nav>
-
-<div class="toast" id="toast"></div>
-
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <button class="lightbox-close" onclick="closeLightbox()">×</button>
-  <img id="lightbox-img" src="" alt="">
-</div>
 
 
 <!-- ════════════════════════════════════
@@ -85,18 +96,21 @@
 
   <div class="parish-content sc">
     <div class="section-grid">
+
       <div class="section-card">
         <div class="section-card-header sc"><span class="icon">📢</span><h3>Avisos y Noticias</h3></div>
         <div class="section-card-body" id="sc-notices-display">
           <div class="empty-state">No hay avisos por el momento.</div>
         </div>
       </div>
+
       <div class="section-card">
         <div class="section-card-header sc"><span class="icon">📅</span><h3>Próximas Fechas</h3></div>
         <div class="section-card-body sc" id="sc-events-display">
           <div class="empty-state">No hay eventos próximos.</div>
         </div>
       </div>
+
     </div>
 
     <div class="full-section-card">
@@ -122,31 +136,32 @@
 ════════════════════════════════════ -->
 <div class="page" id="page-lj">
 
-  <div class="parish-header lj">
+  <div class="parish-header sc">
     <div class="parish-header-overlay"></div>
     <div class="parish-header-text-box">
       <div style="font-size:2.5rem;margin-bottom:0.75rem;">⛪</div>
-      <h1 class="parish-title">Parroquia Nuestra Señora de Luján</h1>
+      <h1 class="parish-title">Parroquia Nuestra Señora de Luján/h1>
       <p class="parish-subtitle">Bajo el manto de María, caminamos en comunidad</p>
     </div>
   </div>
 
-
-  
   <div class="parish-content lj">
     <div class="section-grid">
+
       <div class="section-card">
         <div class="section-card-header lj"><span class="icon">📢</span><h3>Avisos y Noticias</h3></div>
         <div class="section-card-body" id="lj-notices-display">
           <div class="empty-state">No hay avisos por el momento.</div>
         </div>
       </div>
+
       <div class="section-card">
         <div class="section-card-header lj"><span class="icon">📅</span><h3>Próximas Fechas</h3></div>
         <div class="section-card-body lj" id="lj-events-display">
           <div class="empty-state">No hay eventos próximos.</div>
         </div>
       </div>
+
     </div>
 
     <div class="full-section-card">
@@ -216,6 +231,7 @@
 ════════════════════════════════════ -->
 <div class="page admin-page" id="page-admin">
 
+  <!-- LOGIN -->
   <div id="admin-login-view" class="admin-login">
     <div class="login-box">
       <div style="font-size:2rem;margin-bottom:1rem;">✝</div>
@@ -238,6 +254,7 @@
     </div>
   </div>
 
+  <!-- PANEL PRINCIPAL -->
   <div id="admin-panel-view" style="display:none;">
     <div class="admin-panel">
 
@@ -249,6 +266,7 @@
         <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
       </div>
 
+      <!-- Pestañas -->
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('notices')">📢 Avisos</button>
         <button class="admin-tab"        onclick="switchAdminTab('events')">📅 Fechas</button>
@@ -257,7 +275,8 @@
         <button class="admin-tab"        onclick="switchAdminTab('team')">🤝 Quiénes Somos</button>
       </div>
 
-      <!-- AVISOS -->
+
+      <!-- ══ AVISOS ══ -->
       <div class="admin-section active" id="tab-notices">
         <div class="admin-card">
           <h3>Agregar Aviso</h3>
@@ -275,8 +294,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Descripción</label>
-            <textarea id="n-body" placeholder="Texto del aviso..."></textarea>
+            <label>Contenido</label>
+            <textarea id="n-content" placeholder="Texto del aviso..."></textarea>
           </div>
           <button class="btn-add" onclick="addNotice()">+ Agregar Aviso</button>
         </div>
@@ -286,7 +305,8 @@
         </div>
       </div>
 
-      <!-- EVENTOS -->
+
+      <!-- ══ EVENTOS ══ -->
       <div class="admin-section" id="tab-events">
         <div class="admin-card">
           <h3>Agregar Fecha / Evento</h3>
@@ -321,7 +341,8 @@
         </div>
       </div>
 
-      <!-- HORARIOS -->
+
+      <!-- ══ HORARIOS ══ -->
       <div class="admin-section" id="tab-schedule">
         <div class="admin-card">
           <h3>Agregar Horario de Misa</h3>
@@ -340,7 +361,7 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Hora</label>
+              <label>Hora(s)</label>
               <input type="text" id="s-time" placeholder="Ej: 08:00 · 11:00 · 19:30 hrs">
             </div>
           </div>
@@ -352,23 +373,41 @@
         </div>
       </div>
 
-      <!-- FOTOS -->
+
+      <!-- ══ FOTOS ══ -->
       <div class="admin-section" id="tab-photos">
         <div class="admin-card">
-          <h3>Subir Fotos</h3>
-          <div class="form-group">
-            <label>Parroquia</label>
-            <select id="p-parish">
-              <option value="sc">San Crescente</option>
-              <option value="lj">Nuestra Señora de Luján</option>
-            </select>
+          <h3>Agregar Foto</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parroquia</label>
+              <select id="p-parish">
+                <option value="sc">San Crescente</option>
+                <option value="lj">Nuestra Señora de Luján</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Descripción (opcional)</label>
+              <input type="text" id="p-desc" placeholder="Ej: Misa de Navidad 2024">
+            </div>
           </div>
+          <div class="form-group">
+            <label>URL de la imagen</label>
+            <input type="url" id="p-url" placeholder="https://ejemplo.com/foto.jpg">
+          </div>
+          <p style="text-align:center;color:#aaa;font-family:'Lora',serif;font-style:italic;font-size:0.8rem;margin:0.5rem 0;">— o —</p>
           <div class="upload-zone" onclick="document.getElementById('photo-upload-input').click()">
-            <p>📸 Haz clic para seleccionar fotos</p>
+            <p>📸 Subir imagen desde el dispositivo</p>
             <p style="font-size:0.78rem;margin-top:4px;">JPG, PNG o WEBP</p>
           </div>
-          <input type="file" id="photo-upload-input" accept="image/*" multiple
-                 onchange="handlePhotos(event)" style="display:none;">
+          <input type="file" id="photo-upload-input" accept="image/*"
+                 onchange="handlePhotoFile(event)" style="display:none;">
+          <div id="photo-preview-wrap" style="display:none;margin-top:1rem;text-align:center;">
+            <img id="photo-preview" style="max-height:160px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);">
+          </div>
+          <input type="hidden" id="p-base64">
+          <br>
+          <button class="btn-add" onclick="addPhoto()">+ Agregar Foto</button>
         </div>
         <div class="admin-card">
           <h3>Fotos — San Crescente</h3>
@@ -380,29 +419,33 @@
         </div>
       </div>
 
-      <!-- QUIÉNES SOMOS -->
+
+      <!-- ══ QUIÉNES SOMOS ══ -->
       <div class="admin-section" id="tab-team">
 
+        <!-- Descripción SC -->
         <div class="admin-card">
-          <h3>✏️ Descripción — San Crescente</h3>
+          <h3>✏️ Quiénes Somos — San Crescente</h3>
           <div class="form-group">
-            <label>Texto introductorio de la comunidad</label>
+            <label>Texto introductorio</label>
             <textarea id="tm-sc-description" rows="3"
               placeholder="Ej: Somos una comunidad parroquial comprometida con el Evangelio..."></textarea>
           </div>
-          <button class="btn-add" onclick="saveTeamDescription('sc')">💾 Guardar</button>
+          <button class="btn-add" onclick="saveParishAbout('sc')">💾 Guardar</button>
         </div>
 
+        <!-- Descripción LJ -->
         <div class="admin-card">
-          <h3>✏️ Descripción — Nuestra Señora de Luján</h3>
+          <h3>✏️ Quiénes Somos — Nuestra Señora de Luján</h3>
           <div class="form-group">
-            <label>Texto introductorio de la comunidad</label>
+            <label>Texto introductorio</label>
             <textarea id="tm-lj-description" rows="3"
               placeholder="Ej: Bajo el manto de la Virgen de Luján, nuestra comunidad..."></textarea>
           </div>
-          <button class="btn-add" onclick="saveTeamDescription('lj')">💾 Guardar</button>
+          <button class="btn-add" onclick="saveParishAbout('lj')">💾 Guardar</button>
         </div>
 
+        <!-- Agregar persona -->
         <div class="admin-card">
           <h3>➕ Agregar Persona</h3>
           <div class="form-row">
@@ -421,7 +464,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>Cargo / Rol</label>
-              <input type="text" id="tm-role" placeholder="Ej: Párroco, Diácono, Coordinadora...">
+              <input type="text" id="tm-role" placeholder="Ej: Párroco, Diácono...">
             </div>
             <div class="form-group">
               <label>Teléfono / WhatsApp</label>
@@ -440,11 +483,11 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Facebook (nombre o URL)</label>
+              <label>Facebook</label>
               <input type="text" id="tm-facebook" placeholder="ParroquiaSanCrescente">
             </div>
             <div class="form-group">
-              <label>Foto de la persona</label>
+              <label>Foto</label>
               <div class="upload-zone" style="padding:0.75rem 1rem;"
                    onclick="document.getElementById('tm-photo-input').click()">
                 <p id="tm-photo-label" style="margin:0;font-size:0.82rem;">📷 Subir foto</p>
@@ -457,6 +500,7 @@
           <button class="btn-add" onclick="addTeamMember()">+ Agregar Persona</button>
         </div>
 
+        <!-- Listas -->
         <div class="admin-card">
           <h3>Personas — San Crescente</h3>
           <div id="admin-team-sc-list"><div class="empty-state">No hay personas registradas.</div></div>
@@ -466,11 +510,12 @@
           <div id="admin-team-lj-list"><div class="empty-state">No hay personas registradas.</div></div>
         </div>
 
-      </div>
+      </div><!-- /tab-team -->
 
     </div>
   </div>
-</div>
+</div><!-- /page-admin -->
+
 
 <script src="app.js"></script>
 </body>
