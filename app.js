@@ -1,68 +1,59 @@
 /* ════════════════════════════════════════════════════════
-   app.js — Parroquias San Crescente & Nuestra Señora de Luján
-   Base de datos: Supabase (JS SDK v2)
+   app.js — compartido entre index.html y admin.html
+   Supabase JS SDK v2
 
-   TABLAS USADAS (esquema real):
-   ─────────────────────────────
-   parishes        → id (text PK), name, about_us, updated_at
-   notices         → id (uuid PK), parish_id (→parishes.id), title, content, created_at
-   events          → id (uuid PK), parish_id, title, event_date, description, created_at
-   photos          → id (uuid PK), parish_id, url, description, created_at
-
-   TABLAS EXTRA (ver supabase_extra.sql para crearlas):
-   ─────────────────────────────────────────────────────
-   schedules       → id (uuid PK), parish_id, day, time, created_at
-   team_members    → id (uuid PK), parish_id, name, role, phone, email,
-                     instagram, facebook, photo_url, created_at
+   TABLAS:
+   parishes      → id (text PK), name, about_us, updated_at
+   notices       → id (uuid), parish_id, title, content, created_at
+   events        → id (uuid), parish_id, title, event_date, description, created_at
+   photos        → id (uuid), parish_id, url, description, created_at
+   schedules     → id (uuid), parish_id, day, time, created_at
+   team_members  → id (uuid), parish_id, name, role, phone, email,
+                   instagram, facebook, photo_url, created_at
 ════════════════════════════════════════════════════════ */
 
-
 // ════════════════════════════════════════════════════════
-// CONFIGURACIÓN SUPABASE
+// SUPABASE
 // ════════════════════════════════════════════════════════
-
 const SUPABASE_URL = 'https://ojosqscdzjehutitdfoz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_laJxknrjuvEn4FvHN0wIJg_hROPOPdx';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// IDs de parroquia tal como están en la tabla `parishes`
-const PARISH_IDS = { sc: 'sc', lj: 'lj' };
-
 
 // ════════════════════════════════════════════════════════
 // ESTADO LOCAL (caché en memoria)
 // ════════════════════════════════════════════════════════
-
 const state = {
   parishes: {
     sc: { id: 'sc', name: 'Parroquia San Crescente',           about_us: '' },
     lj: { id: 'lj', name: 'Parroquia Nuestra Señora de Luján', about_us: '' }
   },
-  notices:   [],          // todos los avisos de ambas parroquias
-  events:    [],          // todos los eventos
+  notices:   [],
+  events:    [],
   photos:    { sc: [], lj: [] },
   schedules: { sc: [], lj: [] },
   team:      { sc: [], lj: [] }
 };
 
+// Detectar en qué página estamos
+const IS_ADMIN = document.body.classList.contains('admin-body');
+
 
 // ════════════════════════════════════════════════════════
 // CARGA INICIAL DESDE SUPABASE
 // ════════════════════════════════════════════════════════
-
 async function loadAllData() {
   showLoading(true);
   try {
-    // Cargar todo en paralelo
     const [
-      { data: parishes,  error: eParishes  },
-      { data: notices,   error: eNotices   },
-      { data: events,    error: eEvents    },
-      { data: photos,    error: ePhotos    },
-      { data: schedules, error: eSchedules },
-      { data: team,      error: eTeam      }
+      { data: parishes  },
+      { data: notices   },
+      { data: events    },
+      { data: photos    },
+      { data: schedules },
+      { data: team      }
     ] = await Promise.all([
       db.from('parishes').select('*'),
       db.from('notices').select('*').order('created_at', { ascending: false }),
@@ -72,38 +63,31 @@ async function loadAllData() {
       db.from('team_members').select('*').order('created_at', { ascending: true })
     ]);
 
-    // Parroquias → guardar about_us en estado local
-    if (parishes) {
-      parishes.forEach(p => {
-        if (state.parishes[p.id]) {
-          state.parishes[p.id].about_us = p.about_us || '';
-          state.parishes[p.id].name     = p.name;
-        }
-      });
-    }
+    if (parishes) parishes.forEach(p => {
+      if (state.parishes[p.id]) {
+        state.parishes[p.id].about_us = p.about_us || '';
+        state.parishes[p.id].name     = p.name;
+      }
+    });
 
-    // Avisos
-    state.notices = notices || [];
-
-    // Eventos
-    state.events = events || [];
-
-    // Fotos separadas por parroquia
-    const allPhotos = photos || [];
-    state.photos.sc = allPhotos.filter(p => p.parish_id === 'sc');
-    state.photos.lj = allPhotos.filter(p => p.parish_id === 'lj');
-
-    // Horarios (tabla extra)
-    const allSchedules = schedules || [];
-    state.schedules.sc = allSchedules.filter(s => s.parish_id === 'sc');
-    state.schedules.lj = allSchedules.filter(s => s.parish_id === 'lj');
-
-    // Equipo (tabla extra)
-    const allTeam = team || [];
-    state.team.sc = allTeam.filter(m => m.parish_id === 'sc');
-    state.team.lj = allTeam.filter(m => m.parish_id === 'lj');
+    state.notices      = notices   || [];
+    state.events       = events    || [];
+    state.photos.sc    = (photos    || []).filter(p => p.parish_id === 'sc');
+    state.photos.lj    = (photos    || []).filter(p => p.parish_id === 'lj');
+    state.schedules.sc = (schedules || []).filter(s => s.parish_id === 'sc');
+    state.schedules.lj = (schedules || []).filter(s => s.parish_id === 'lj');
+    state.team.sc      = (team      || []).filter(m => m.parish_id === 'sc');
+    state.team.lj      = (team      || []).filter(m => m.parish_id === 'lj');
 
     renderAll();
+
+    // Si estamos en admin, rellenar los textareas de descripción
+    if (IS_ADMIN) {
+      const scD = document.getElementById('tm-sc-description');
+      const ljD = document.getElementById('tm-lj-description');
+      if (scD) scD.value = state.parishes.sc.about_us;
+      if (ljD) ljD.value = state.parishes.lj.about_us;
+    }
   } catch (err) {
     console.error('Error cargando datos:', err);
     showToast('⚠️ Error al conectar con la base de datos.');
@@ -114,70 +98,60 @@ async function loadAllData() {
 
 
 // ════════════════════════════════════════════════════════
-// NAVEGACIÓN
+// NAVEGACIÓN (solo index.html)
 // ════════════════════════════════════════════════════════
-
-const PAGE_ORDER = ['home', 'sc', 'lj', 'quienes', 'admin'];
+const PAGE_ORDER = ['home', 'sc', 'lj', 'quienes'];
 
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+  document.querySelectorAll('.nav-btn:not(.admin-btn):not(.admin-back-btn)').forEach((btn, i) => {
     btn.classList.toggle('active', PAGE_ORDER[i] === id);
   });
   renderAll();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function switchQuienesTab(parish) {
   ['sc', 'lj'].forEach(p => {
-    document.getElementById('qtab-'  + p).classList.toggle('active', p === parish);
-    document.getElementById('qpanel-'+ p).classList.toggle('active', p === parish);
+    const tab   = document.getElementById('qtab-'   + p);
+    const panel = document.getElementById('qpanel-' + p);
+    if (tab)   tab.classList.toggle('active',   p === parish);
+    if (panel) panel.classList.toggle('active', p === parish);
   });
 }
 
 
 // ════════════════════════════════════════════════════════
-// AUTENTICACIÓN ADMIN
+// AUTENTICACIÓN ADMIN (solo admin.html)
 // ════════════════════════════════════════════════════════
-
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'parroquia2024';
 
 function doLogin(event) {
-    // 1. EVITAR RECARGA: Si el botón está en un <form>, esto evita que la página se refresque
-    if (event) event.preventDefault();
+  if (event) event.preventDefault();
+  const user    = document.getElementById('login-user').value.trim();
+  const pass    = document.getElementById('login-pass').value.trim();
+  const errorEl = document.getElementById('login-error');
 
-    const userEl = document.getElementById('login-user');
-    const passEl = document.getElementById('login-pass');
-    const errorEl = document.getElementById('login-error');
+  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    document.getElementById('admin-login-view').style.display = 'none';
+    document.getElementById('admin-panel-view').style.display = 'block';
+    errorEl.style.display = 'none';
 
-    const user = userEl.value.trim();
-    const pass = passEl.value.trim();
+    const scD = document.getElementById('tm-sc-description');
+    const ljD = document.getElementById('tm-lj-description');
+    if (scD) scD.value = state.parishes.sc.about_us || '';
+    if (ljD) ljD.value = state.parishes.lj.about_us || '';
 
-    // 2. LOG DE SEGURIDAD (Míralo en F12 si falla)
-    console.log("Validando acceso para:", user);
-
-    if (user === ADMIN_USER && pass === ADMIN_PASS) {
-        // Ocultar login y mostrar panel
-        document.getElementById('admin-login-view').style.display = 'none';
-        document.getElementById('admin-panel-view').style.display = 'block';
-        errorEl.style.display = 'none';
-
-        // 3. RELLENAR DATOS: Aseguramos que los campos de texto tengan la info de Supabase
-        const scDesc = document.getElementById('tm-sc-description');
-        const ljDesc = document.getElementById('tm-lj-description');
-        
-        if (scDesc) scDesc.value = state.parishes.sc.about_us || '';
-        if (ljDesc) ljDesc.value = state.parishes.lj.about_us || '';
-
-        // Actualizar listas de la base de datos en la vista admin
-        renderAll();
-        showToast('Acceso concedido ✓');
-    } else {
-        errorEl.textContent = 'Usuario o contraseña incorrectos.';
-        errorEl.style.display = 'block';
-        passEl.value = ''; // Limpiar clave por seguridad
-    }
+    renderAdminLists();
+    renderAdminTeam();
+    showToast('Acceso concedido ✓');
+  } else {
+    errorEl.textContent = 'Usuario o contraseña incorrectos.';
+    errorEl.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
 }
 
 function doLogout() {
@@ -191,7 +165,6 @@ function doLogout() {
 // ════════════════════════════════════════════════════════
 // PESTAÑAS PANEL ADMIN
 // ════════════════════════════════════════════════════════
-
 const ADMIN_TAB_ORDER = ['notices', 'events', 'schedule', 'photos', 'team'];
 
 function switchAdminTab(tab) {
@@ -204,22 +177,17 @@ function switchAdminTab(tab) {
 
 
 // ════════════════════════════════════════════════════════
-// AVISOS  (tabla: notices → parish_id, title, content)
+// AVISOS
 // ════════════════════════════════════════════════════════
-
 async function addNotice() {
   const parish_id = document.getElementById('n-parish').value;
   const title     = document.getElementById('n-title').value.trim();
   const content   = document.getElementById('n-content').value.trim();
-
   if (!title) { showToast('Por favor ingresa un título.'); return; }
 
   showLoading(true);
-  const { data, error } = await db
-    .from('notices')
-    .insert([{ parish_id, title, content }])
-    .select()
-    .single();
+  const { data, error } = await db.from('notices')
+    .insert([{ parish_id, title, content }]).select().single();
   showLoading(false);
 
   if (error) { showToast('⚠️ Error al guardar el aviso.'); console.error(error); return; }
@@ -241,23 +209,18 @@ async function deleteNotice(id) {
 
 
 // ════════════════════════════════════════════════════════
-// EVENTOS  (tabla: events → parish_id, title, event_date, description)
+// EVENTOS
 // ════════════════════════════════════════════════════════
-
 async function addEvent() {
   const parish_id   = document.getElementById('e-parish').value;
   const title       = document.getElementById('e-title').value.trim();
   const event_date  = document.getElementById('e-date').value;
   const description = document.getElementById('e-desc').value.trim();
-
   if (!title || !event_date) { showToast('Completa título y fecha.'); return; }
 
   showLoading(true);
-  const { data, error } = await db
-    .from('events')
-    .insert([{ parish_id, title, event_date, description }])
-    .select()
-    .single();
+  const { data, error } = await db.from('events')
+    .insert([{ parish_id, title, event_date, description }]).select().single();
   showLoading(false);
 
   if (error) { showToast('⚠️ Error al guardar el evento.'); console.error(error); return; }
@@ -281,22 +244,17 @@ async function deleteEvent(id) {
 
 
 // ════════════════════════════════════════════════════════
-// HORARIOS  (tabla extra: schedules → parish_id, day, time)
+// HORARIOS
 // ════════════════════════════════════════════════════════
-
 async function addSchedule() {
   const parish_id = document.getElementById('s-parish').value;
   const day       = document.getElementById('s-day').value.trim();
   const time      = document.getElementById('s-time').value.trim();
-
   if (!day || !time) { showToast('Completa día y hora.'); return; }
 
   showLoading(true);
-  const { data, error } = await db
-    .from('schedules')
-    .insert([{ parish_id, day, time }])
-    .select()
-    .single();
+  const { data, error } = await db.from('schedules')
+    .insert([{ parish_id, day, time }]).select().single();
   showLoading(false);
 
   if (error) { showToast('⚠️ Error al guardar el horario.'); console.error(error); return; }
@@ -318,18 +276,15 @@ async function deleteSchedule(id, parish_id) {
 
 
 // ════════════════════════════════════════════════════════
-// FOTOS  (tabla: photos → parish_id, url, description)
-// Soporta URL directa O subida de archivo (convertida a base64 como URL)
+// FOTOS
 // ════════════════════════════════════════════════════════
-
-// Previsualización al elegir archivo
 function handlePhotoFile(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     document.getElementById('p-base64').value = ev.target.result;
-    document.getElementById('p-url').value    = '';   // limpiar campo URL
+    document.getElementById('p-url').value    = '';
     const preview = document.getElementById('photo-preview');
     preview.src = ev.target.result;
     document.getElementById('photo-preview-wrap').style.display = 'block';
@@ -342,30 +297,22 @@ async function addPhoto() {
   const description = document.getElementById('p-desc').value.trim();
   const urlField    = document.getElementById('p-url').value.trim();
   const base64Field = document.getElementById('p-base64').value;
-
-  // Usar URL si existe, si no usar base64
-  const url = urlField || base64Field;
+  const url         = urlField || base64Field;
   if (!url) { showToast('Agrega una URL o sube una imagen.'); return; }
 
   showLoading(true);
-  const { data, error } = await db
-    .from('photos')
-    .insert([{ parish_id, url, description }])
-    .select()
-    .single();
+  const { data, error } = await db.from('photos')
+    .insert([{ parish_id, url, description }]).select().single();
   showLoading(false);
 
   if (error) { showToast('⚠️ Error al guardar la foto.'); console.error(error); return; }
 
   state.photos[parish_id].push(data);
-
-  // Limpiar formulario
   document.getElementById('p-url').value    = '';
   document.getElementById('p-desc').value   = '';
   document.getElementById('p-base64').value = '';
   document.getElementById('photo-preview-wrap').style.display = 'none';
   document.getElementById('photo-upload-input').value = '';
-
   renderAll();
   showToast('Foto agregada ✓');
 }
@@ -380,21 +327,16 @@ async function deletePhoto(id, parish_id) {
 
 
 // ════════════════════════════════════════════════════════
-// QUIÉNES SOMOS — about_us (tabla: parishes → about_us)
+// QUIÉNES SOMOS — DESCRIPCIÓN
 // ════════════════════════════════════════════════════════
-
 async function saveParishAbout(parish_id) {
   const about_us = document.getElementById('tm-' + parish_id + '-description').value.trim();
-
   showLoading(true);
-  const { error } = await db
-    .from('parishes')
+  const { error } = await db.from('parishes')
     .update({ about_us, updated_at: new Date().toISOString() })
     .eq('id', parish_id);
   showLoading(false);
-
   if (error) { showToast('⚠️ Error al guardar la descripción.'); console.error(error); return; }
-
   state.parishes[parish_id].about_us = about_us;
   renderAll();
   showToast('Descripción guardada ✓');
@@ -402,15 +344,14 @@ async function saveParishAbout(parish_id) {
 
 
 // ════════════════════════════════════════════════════════
-// QUIÉNES SOMOS — Personas (tabla extra: team_members)
+// QUIÉNES SOMOS — PERSONAS
 // ════════════════════════════════════════════════════════
-
 function previewTeamPhoto(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    document.getElementById('tm-photo-data').value  = ev.target.result;
+    document.getElementById('tm-photo-data').value = ev.target.result;
     document.getElementById('tm-photo-label').textContent = '✅ ' + file.name;
   };
   reader.readAsDataURL(file);
@@ -425,27 +366,21 @@ async function addTeamMember() {
   const instagram = document.getElementById('tm-instagram').value.trim();
   const facebook  = document.getElementById('tm-facebook').value.trim();
   const photo_url = document.getElementById('tm-photo-data').value;
-
   if (!name || !role) { showToast('El nombre y el cargo son obligatorios.'); return; }
 
   showLoading(true);
-  const { data, error } = await db
-    .from('team_members')
+  const { data, error } = await db.from('team_members')
     .insert([{ parish_id, name, role, phone, email, instagram, facebook, photo_url }])
-    .select()
-    .single();
+    .select().single();
   showLoading(false);
 
   if (error) { showToast('⚠️ Error al guardar la persona.'); console.error(error); return; }
 
   state.team[parish_id].push(data);
-
-  // Limpiar formulario
   ['tm-name','tm-role','tm-phone','tm-email','tm-instagram','tm-facebook','tm-photo-data']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('tm-photo-label').textContent = '📷 Subir foto';
   document.getElementById('tm-photo-input').value = '';
-
   renderAll();
   showToast('Persona agregada ✓');
 }
@@ -461,8 +396,10 @@ async function deleteTeamMember(id, parish_id) {
 
 // ════════════════════════════════════════════════════════
 // RENDERIZADO PRINCIPAL
+// Funciona tanto en index.html como en admin.html.
+// Las funciones que buscan elementos que no existen en la
+// página actual simplemente retornan sin hacer nada.
 // ════════════════════════════════════════════════════════
-
 function renderAll() {
   ['sc', 'lj'].forEach(p => {
     renderNotices(p);
@@ -480,9 +417,7 @@ function renderNotices(p) {
   const el = document.getElementById(p + '-notices-display');
   if (!el) return;
   const list = state.notices.filter(n => n.parish_id === p);
-
   if (!list.length) { el.innerHTML = '<div class="empty-state">No hay avisos por el momento.</div>'; return; }
-
   el.innerHTML = list.map(n => {
     const date = new Date(n.created_at).toLocaleDateString('es-CL',
       { day:'2-digit', month:'short', year:'numeric' });
@@ -502,9 +437,7 @@ function renderEvents(p) {
   const el = document.getElementById(p + '-events-display');
   if (!el) return;
   const list = state.events.filter(e => e.parish_id === p);
-
   if (!list.length) { el.innerHTML = '<div class="empty-state">No hay eventos próximos.</div>'; return; }
-
   el.innerHTML = list.map(ev => {
     const d     = new Date(ev.event_date + 'T00:00:00');
     const day   = d.toLocaleDateString('es-CL', { day:'2-digit' });
@@ -512,8 +445,7 @@ function renderEvents(p) {
     return `
       <div class="event-item">
         <div class="event-date-box">
-          <div class="month">${month}</div>
-          <div class="day">${day}</div>
+          <div class="month">${month}</div><div class="day">${day}</div>
         </div>
         <div class="event-info">
           <h4>${esc(ev.title)}</h4>
@@ -528,7 +460,6 @@ function renderSchedules(p) {
   const el = document.getElementById(p + '-schedule-display');
   if (!el) return;
   const list = state.schedules[p];
-
   el.innerHTML = list.length
     ? list.map(s => `
         <div class="schedule-item">
@@ -543,7 +474,6 @@ function renderPhotos(p) {
   const el = document.getElementById(p + '-photos-display');
   if (!el) return;
   const list = state.photos[p];
-
   el.innerHTML = list.length
     ? list.map(ph => `
         <div class="photo-thumb" onclick="openLightbox('${ph.url}')">
@@ -555,7 +485,6 @@ function renderPhotos(p) {
 // ── Quiénes Somos ────────────────────────────────────────
 function renderQuienesSomos() {
   ['sc', 'lj'].forEach(p => {
-    // Descripción (about_us de parishes)
     const descWrap = document.getElementById('qdesc-' + p + '-wrap');
     const descText = document.getElementById('qdesc-' + p);
     if (descWrap && descText) {
@@ -563,8 +492,6 @@ function renderQuienesSomos() {
       descText.textContent   = txt;
       descWrap.style.display = txt ? 'block' : 'none';
     }
-
-    // Tarjetas del equipo
     const grid = document.getElementById('qteam-' + p);
     if (!grid) return;
     const members = state.team[p];
@@ -578,7 +505,6 @@ function buildTeamCard(m, parish) {
   const igSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
   const fbSVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
   const color = parish === 'sc' ? 'var(--sc-blue)' : 'var(--lj-burgundy)';
-
   return `
     <div class="team-card">
       <div class="team-photo-wrap">
@@ -590,21 +516,20 @@ function buildTeamCard(m, parish) {
         <h4 class="team-name">${esc(m.name)}</h4>
         <span class="team-role" style="background:${color};">${esc(m.role)}</span>
         <div class="team-contacts">
-          ${m.phone     ? `<a href="tel:${esc(m.phone)}"                          class="team-contact-link phone">📞 ${esc(m.phone)}</a>` : ''}
-          ${m.email     ? `<a href="mailto:${esc(m.email)}"                        class="team-contact-link email">✉️ ${esc(m.email)}</a>` : ''}
+          ${m.phone     ? `<a href="tel:${esc(m.phone)}" class="team-contact-link phone">📞 ${esc(m.phone)}</a>` : ''}
+          ${m.email     ? `<a href="mailto:${esc(m.email)}" class="team-contact-link email">✉️ ${esc(m.email)}</a>` : ''}
           ${m.instagram ? `<a href="https://instagram.com/${esc(m.instagram)}" target="_blank" class="team-contact-link instagram">${igSVG} @${esc(m.instagram)}</a>` : ''}
-          ${m.facebook  ? `<a href="https://facebook.com/${esc(m.facebook)}"  target="_blank" class="team-contact-link facebook">${fbSVG} ${esc(m.facebook)}</a>` : ''}
+          ${m.facebook  ? `<a href="https://facebook.com/${esc(m.facebook)}" target="_blank" class="team-contact-link facebook">${fbSVG} ${esc(m.facebook)}</a>` : ''}
         </div>
       </div>
     </div>`;
 }
 
-// ── Admin: listas de contenido ───────────────────────────
+// ── Admin: listas ────────────────────────────────────────
 function renderAdminLists() {
   const noticesEl = document.getElementById('admin-notices-list');
   if (!noticesEl) return;
 
-  // Avisos
   noticesEl.innerHTML = state.notices.length
     ? state.notices.map(n => {
         const date = new Date(n.created_at).toLocaleDateString('es-CL',
@@ -612,11 +537,7 @@ function renderAdminLists() {
         return `
           <div class="admin-list-item">
             <div class="admin-list-item-text">
-              <strong>
-                <span class="parish-badge ${n.parish_id==='sc'?'badge-sc':'badge-lj'}">
-                  ${n.parish_id==='sc'?'SC':'LJ'}
-                </span>${esc(n.title)}
-              </strong>
+              <strong><span class="parish-badge ${n.parish_id==='sc'?'badge-sc':'badge-lj'}">${n.parish_id==='sc'?'SC':'LJ'}</span>${esc(n.title)}</strong>
               <span>${esc(n.content||'')} · ${date}</span>
             </div>
             <button class="btn-del" onclick="deleteNotice('${n.id}')">✕</button>
@@ -624,43 +545,32 @@ function renderAdminLists() {
       }).join('')
     : '<div class="empty-state">No hay avisos.</div>';
 
-  // Eventos
   const eventsEl = document.getElementById('admin-events-list');
   eventsEl.innerHTML = state.events.length
     ? state.events.map(ev => `
         <div class="admin-list-item">
           <div class="admin-list-item-text">
-            <strong>
-              <span class="parish-badge ${ev.parish_id==='sc'?'badge-sc':'badge-lj'}">
-                ${ev.parish_id==='sc'?'SC':'LJ'}
-              </span>${esc(ev.title)}
-            </strong>
+            <strong><span class="parish-badge ${ev.parish_id==='sc'?'badge-sc':'badge-lj'}">${ev.parish_id==='sc'?'SC':'LJ'}</span>${esc(ev.title)}</strong>
             <span>${ev.event_date}${ev.description?' · '+esc(ev.description):''}</span>
           </div>
           <button class="btn-del" onclick="deleteEvent('${ev.id}')">✕</button>
         </div>`).join('')
     : '<div class="empty-state">No hay eventos.</div>';
 
-  // Horarios
   const schedEl = document.getElementById('admin-schedule-list');
-  const allSchedules = [...state.schedules.sc, ...state.schedules.lj];
-  schedEl.innerHTML = allSchedules.length
-    ? allSchedules.map(s => `
+  const allSched = [...state.schedules.sc, ...state.schedules.lj];
+  schedEl.innerHTML = allSched.length
+    ? allSched.map(s => `
         <div class="admin-list-item">
           <div class="admin-list-item-text">
-            <strong>
-              <span class="parish-badge ${s.parish_id==='sc'?'badge-sc':'badge-lj'}">
-                ${s.parish_id==='sc'?'SC':'LJ'}
-              </span>${esc(s.day)}
-            </strong>
+            <strong><span class="parish-badge ${s.parish_id==='sc'?'badge-sc':'badge-lj'}">${s.parish_id==='sc'?'SC':'LJ'}</span>${esc(s.day)}</strong>
             <span>${esc(s.time)}</span>
           </div>
           <button class="btn-del" onclick="deleteSchedule('${s.id}','${s.parish_id}')">✕</button>
         </div>`).join('')
     : '<div class="empty-state">No hay horarios.</div>';
 
-  // Fotos
-  ['sc', 'lj'].forEach(p => {
+  ['sc','lj'].forEach(p => {
     const grid = document.getElementById('admin-' + p + '-photos');
     if (!grid) return;
     grid.innerHTML = state.photos[p].length
@@ -676,18 +586,14 @@ function renderAdminLists() {
 // ── Admin: equipo ────────────────────────────────────────
 function renderAdminTeam() {
   ['sc', 'lj'].forEach(p => {
-    // Rellenar textarea de descripción
     const descEl = document.getElementById('tm-' + p + '-description');
     if (descEl && !descEl.value && state.parishes[p].about_us) {
       descEl.value = state.parishes[p].about_us;
     }
-
     const listEl = document.getElementById('admin-team-' + p + '-list');
     if (!listEl) return;
-    const members = state.team[p];
-
-    listEl.innerHTML = members.length
-      ? members.map(m => `
+    listEl.innerHTML = state.team[p].length
+      ? state.team[p].map(m => `
           <div class="admin-list-item">
             <div style="display:flex;align-items:center;gap:0.75rem;flex:1;">
               ${m.photo_url
@@ -708,7 +614,6 @@ function renderAdminTeam() {
 // ════════════════════════════════════════════════════════
 // LIGHTBOX
 // ════════════════════════════════════════════════════════
-
 function openLightbox(src) {
   document.getElementById('lightbox-img').src = src;
   document.getElementById('lightbox').classList.add('active');
@@ -721,14 +626,9 @@ function closeLightbox() {
 // ════════════════════════════════════════════════════════
 // UTILIDADES
 // ════════════════════════════════════════════════════════
-
 function esc(str) {
   if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function showToast(msg) {

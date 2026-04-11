@@ -1362,3 +1362,164 @@ nav {
   letter-spacing: 2px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* ════════════════════════════════════════════════════════
+   MENÚ HAMBURGUESA — MÓVIL
+════════════════════════════════════════════════════════ */
+
+/* El botón hamburguesa se oculta en escritorio */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1.5px solid var(--gold-dark);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 6px;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+.nav-hamburger:hover { border-color: var(--gold); }
+
+/* Las tres líneas */
+.nav-hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  transform-origin: center;
+}
+
+/* Animación X al abrir */
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── En móvil: hamburguesa visible y menú desplegable ── */
+@media (max-width: 768px) {
+  nav {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 0 1rem;
+    min-height: 60px;
+    gap: 0;
+  }
+
+  .nav-brand {
+    padding: 1rem 0;
+    font-size: 0.88rem;
+    flex: 1;
+  }
+
+  .nav-hamburger {
+    display: flex;
+    margin: 0.6rem 0;
+  }
+
+  /* El menú se oculta por defecto y aparece al abrir */
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    border-top: 1px solid rgba(201,168,76,0.15);
+    padding: 0.5rem 0 1rem;
+    gap: 2px;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-btn {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    /* Importante: ancla en texto no en flex */
+    justify-content: flex-start;
+  }
+
+  .nav-btn.admin-btn {
+    margin-left: 0;
+    margin-top: 8px;
+    text-align: left;
+    display: block;
+    padding: 12px 16px;
+    text-decoration: none;
+  }
+
+  /* Ajuste de padding para páginas */
+  .page { padding-top: 60px; }
+}
+
+/* ════════════════════════════════════════════════════════
+   NAV DEL PANEL ADMIN
+════════════════════════════════════════════════════════ */
+.admin-nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(26, 18, 8, 0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gold-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+  flex-shrink: 0;
+}
+
+.admin-back-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--gold-dark);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--gold-dark);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.admin-back-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(201,168,76,0.08);
+}
+
+/* Body de admin: sin el fondo crema */
+.admin-body {
+  background: #f5f0e8;
+}
+
+/* El admin-panel ya no está dentro de .page, necesita padding-top por el nav */
+.admin-body .admin-login {
+  min-height: 100vh;
+  padding-top: 64px;
+}
+.admin-body #admin-panel-view {
+  padding-top: 64px;
+}
+
+@media (max-width: 768px) {
+  .admin-nav {
+    padding: 0 1rem;
+    height: 56px;
+  }
+  .admin-nav .nav-brand { font-size: 0.82rem; }
+  .admin-body .admin-login  { padding-top: 56px; }
+  .admin-body #admin-panel-view { padding-top: 56px; }
+}
