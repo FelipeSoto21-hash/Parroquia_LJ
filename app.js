@@ -143,25 +143,41 @@ function switchQuienesTab(parish) {
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'parroquia2024';
 
-function doLogin() {
-  const user    = document.getElementById('login-user').value.trim();
-  const pass    = document.getElementById('login-pass').value.trim();
-  const errorEl = document.getElementById('login-error');
+function doLogin(event) {
+    // 1. EVITAR RECARGA: Si el botón está en un <form>, esto evita que la página se refresque
+    if (event) event.preventDefault();
 
-  if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    document.getElementById('admin-login-view').style.display = 'none';
-    document.getElementById('admin-panel-view').style.display = 'block';
-    errorEl.style.display = 'none';
-    // Rellenar campos de descripción si ya hay datos
-    const scDesc = document.getElementById('tm-sc-description');
-    const ljDesc = document.getElementById('tm-lj-description');
-    if (scDesc && !scDesc.value) scDesc.value = state.parishes.sc.about_us;
-    if (ljDesc && !ljDesc.value) ljDesc.value = state.parishes.lj.about_us;
-    renderAll();
-  } else {
-    errorEl.textContent = 'Usuario o contraseña incorrectos.';
-    errorEl.style.display = 'block';
-  }
+    const userEl = document.getElementById('login-user');
+    const passEl = document.getElementById('login-pass');
+    const errorEl = document.getElementById('login-error');
+
+    const user = userEl.value.trim();
+    const pass = passEl.value.trim();
+
+    // 2. LOG DE SEGURIDAD (Míralo en F12 si falla)
+    console.log("Validando acceso para:", user);
+
+    if (user === ADMIN_USER && pass === ADMIN_PASS) {
+        // Ocultar login y mostrar panel
+        document.getElementById('admin-login-view').style.display = 'none';
+        document.getElementById('admin-panel-view').style.display = 'block';
+        errorEl.style.display = 'none';
+
+        // 3. RELLENAR DATOS: Aseguramos que los campos de texto tengan la info de Supabase
+        const scDesc = document.getElementById('tm-sc-description');
+        const ljDesc = document.getElementById('tm-lj-description');
+        
+        if (scDesc) scDesc.value = state.parishes.sc.about_us || '';
+        if (ljDesc) ljDesc.value = state.parishes.lj.about_us || '';
+
+        // Actualizar listas de la base de datos en la vista admin
+        renderAll();
+        showToast('Acceso concedido ✓');
+    } else {
+        errorEl.textContent = 'Usuario o contraseña incorrectos.';
+        errorEl.style.display = 'block';
+        passEl.value = ''; // Limpiar clave por seguridad
+    }
 }
 
 function doLogout() {
