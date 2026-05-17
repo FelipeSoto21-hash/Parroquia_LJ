@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parroquia Nuestra Señora de Luján</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,500;1,400&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ── Identidad visual de Parroquia Nuestra Señora de Luján ── */
+    :root {
+      --parish-primary:       #6b1a1a;
+      --parish-primary-light: #922929;
+      --parish-gradient-from: #2a0a0a;
+      --parish-gradient-to:   #200808;
+    }
+    .parish-header {
+      background-image: url('../foto2.jpg');
+      background-position: center 37%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="global-loading"><div class="spinner"></div><p class="spinner-text">Cargando...</p></div>
+<div class="toast" id="toast"></div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">×</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-brand"><span>✝</span> Parroquia Nuestra Señora de Luján</div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMenu()" aria-label="Abrir menú">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
+    <button class="nav-btn active" onclick="showPage('home');closeMenu()">Inicio</button>
+    <button class="nav-btn"        onclick="showPage('info');closeMenu()">La Parroquia</button>
+    <button class="nav-btn"        onclick="showPage('quienes');closeMenu()">Quiénes Somos</button>
+    <a href="../sc/index.html" class="nav-btn other-parish" onclick="closeMenu()">San Crescente →</a>
+  </div>
+</nav>
+
+
+<!-- ══ INICIO ══ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <div class="hero-ornament"></div>
+    <div class="hero-cross">✝</div>
+    <h1 class="hero-title">Parroquia Nuestra Señora de Luján</h1>
+    <p class="hero-subtitle">Bajo el manto de María, caminamos en comunidad</p>
+    <div class="hero-divider"></div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;position:relative;margin-top:1rem;">
+      <button onclick="showPage('info')" style="padding:12px 28px;font-family:'Cinzel',serif;font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;background:var(--parish-primary);color:white;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;">Ver la Parroquia</button>
+      <button onclick="showPage('quienes')" style="padding:12px 28px;font-family:'Cinzel',serif;font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;background:transparent;color:var(--gold-light);border:1.5px solid rgba(201,168,76,0.4);border-radius:6px;cursor:pointer;transition:all 0.2s;">🤝 Quiénes Somos</button>
+    </div>
+    <div class="hero-badge" style="margin-top:2rem;">⛪ También puedes visitar: <a href="../sc/index.html" style="color:var(--gold);text-decoration:none;">San Crescente</a></div>
+  </div>
+</div>
+
+
+<!-- ══ INFORMACIÓN DE LA PARROQUIA ══ -->
+<div class="page" id="page-info">
+
+  <div class="parish-header">
+    <div class="parish-header-overlay"></div>
+    <div class="parish-header-text-box">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;">⛪</div>
+      <h1 class="parish-title">Parroquia Nuestra Señora de Luján</h1>
+      <p class="parish-subtitle">Bajo el manto de María, caminamos en comunidad</p>
+    </div>
+  </div>
+
+  <div class="parish-content">
+    <div class="section-grid">
+      <div class="section-card">
+        <div class="section-card-header"><span class="icon">📢</span><h3>Avisos y Noticias</h3></div>
+        <div class="section-card-body" id="notices-display">
+          <div class="empty-state">No hay avisos por el momento.</div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-card-header"><span class="icon">📅</span><h3>Próximas Fechas</h3></div>
+        <div class="section-card-body" id="events-display">
+          <div class="empty-state">No hay eventos próximos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="full-section-card">
+      <div class="full-section-header"><span style="font-size:1.2rem;">🕊</span><h3>Horario de Misas</h3></div>
+      <div class="full-section-body" id="schedule-display">
+        <div class="empty-state">Horario no disponible aún.</div>
+      </div>
+    </div>
+
+    <div class="full-section-card">
+      <div class="full-section-header"><span style="font-size:1.2rem;">📷</span><h3>Galería de Fotos</h3></div>
+      <div class="photos-grid" id="photos-display">
+        <div class="empty-state" style="grid-column:1/-1;">No hay fotos aún.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══ QUIÉNES SOMOS ══ -->
+<div class="page" id="page-quienes">
+
+  <div class="parish-header">
+    <div class="parish-header-overlay"></div>
+    <div class="parish-header-text-box">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">🤝</div>
+      <h1 class="parish-title">Quiénes Somos</h1>
+      <p class="parish-subtitle">El equipo pastoral de Parroquia Nuestra Señora de Luján</p>
+    </div>
+  </div>
+
+  <div class="quienes-section">
+    <div class="quienes-inner">
+      <h2 class="quienes-title">Nuestro Equipo</h2>
+      <div class="quienes-divider"></div>
+      <p class="quienes-desc-text" id="quienes-desc" style="display:none;"></p>
+      <div class="team-grid" id="team-display">
+        <div class="empty-state" style="grid-column:1/-1;">No hay personas registradas aún.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<script src="app.js"></script>
+<script>
+  // ── Menú hamburguesa ──
+  function toggleMenu() {
+    document.getElementById('nav-links').classList.toggle('open');
+    document.getElementById('nav-hamburger').classList.toggle('open');
+  }
+  function closeMenu() {
+    document.getElementById('nav-links').classList.remove('open');
+    document.getElementById('nav-hamburger').classList.remove('open');
+  }
+  document.addEventListener('click', e => { if (!e.target.closest('nav')) closeMenu(); });
+</script>
+</body>
+</html>
