@@ -9,7 +9,7 @@ const PARISH_ID     = 'lj';   // ← fijo, inmutable
 
 // Credenciales exclusivas de esta parroquia
 const ADMIN_USER = 'admin_lj';
-const ADMIN_PASS = 'parroquia_lj_2024';
+const ADMIN_PASS = 'parroquia_lj';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
